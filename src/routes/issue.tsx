@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { TopBar } from "@/components/epaper/TopBar";
 import { NewspaperPage } from "@/components/epaper/NewspaperPage";
 import { initialEdition } from "@/lib/epaper-data";
+import { ShareCardStudio } from "@/components/epaper/ShareCardStudio";
 
 export const Route = createFileRoute("/issue")({
   head: () => ({
@@ -51,6 +52,7 @@ function IssuePage() {
             <NewspaperPage edition={edition} page={p} />
           </div>
         ))}
+        <div className="no-print"><ShareCardStudio headline={edition.pages[0]?.columns.flat().find((block) => block.type === "headline")?.label ?? "দিনের শেষ খবর"} section="প্রচ্ছদ" date={edition.dateBn}/></div>
       </main>
     </div>
   );

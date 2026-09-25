@@ -1,5 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { AuthGate } from "@/components/epaper/AuthGate";
+import { NewsroomPanel } from "@/components/epaper/NewsroomPanel";
+import { ShareCardStudio } from "@/components/epaper/ShareCardStudio";
+import { supabase } from "@/integrations/supabase/client";
+import { COLUMN_WIDTHS } from "@/lib/epaper-data";
 import { TopBar } from "@/components/epaper/TopBar";
 import { NewspaperPage } from "@/components/epaper/NewspaperPage";
 import {
@@ -22,13 +27,15 @@ export const Route = createFileRoute("/admin")({
           "দিনের শেষ খবর ই-পেপারের অ্যাডমিন প্যানেল—drag-and-drop page builder, article, media, draft ও scheduled publish।",
       },
       { property: "og:title", content: "Design studio · দিনের শেষ খবর অ্যাডমিন" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       {
         property: "og:description",
         content: "ই-পেপারের প্রতিটি block, column ও spacing নিয়ন্ত্রণ করুন এক জায়গা থেকে।",
       },
     ],
   }),
-  component: AdminStudio,
+  component: () => <AuthGate><AdminStudio /></AuthGate>,
 });
 
 const NAV = [
@@ -110,7 +117,7 @@ function AdminStudio() {
           no: prev.pages.length + 1,
           title: "নতুন পৃষ্ঠা",
           section: "দেশ",
-          columns: [[], [], []],
+          columns: [[], [], [], [], [], []],
         },
       ],
     }));
@@ -203,11 +210,13 @@ function AdminStudio() {
           <div className="mt-6 hidden px-2 font-sans text-[0.6rem] leading-relaxed opacity-60 lg:block">
             <p>Design approval prototype</p>
             <p>Build 0.1 · Local demo</p>
-            <p>Autosave simulated</p>
+            <button onClick={() => supabase.auth.signOut().then(() => window.location.reload())} className="mt-3 underline">প্রস্থান</button>
           </div>
         </aside>
 
         <main className="min-w-0 flex-1 px-4 py-5">
+          <div className="no-print mb-5 flex gap-2 border-b border-newsprint-rule pb-3 font-serif-bn text-sm"><button onClick={() => setNav("Editions")} className={nav === "Editions" ? "font-bold text-newsprint-accent" : ""}>পৃষ্ঠা ডিজাইন</button><button onClick={() => setNav("Articles")} className={nav === "Articles" ? "font-bold text-newsprint-accent" : ""}>AI নিউজরুম</button><button onClick={() => setNav("Share")} className={nav === "Share" ? "font-bold text-newsprint-accent" : ""}>শেয়ার কার্ড</button></div>
+          {nav === "Articles" ? <NewsroomPanel onPlace={(draft) => { const block = newBlock("article"); block.label = draft.title; block.body = `${draft.subtitle}\n${draft.summary}\n${draft.body}`; block.section = draft.section; block.columnSpan = 2; updatePage((cols) => cols.map((col, index) => index === 0 ? [...col, block] : col)); setSelectedId(block.id); setNav("Editions"); notify("অনুমোদিত সংবাদ পাতায় বসেছে"); }} /> : nav === "Share" ? <ShareCardStudio headline={page.columns.flat().find((b) => b.type === "headline")?.label ?? "দিনের শেষ খবর"} section={page.section} date={edition.dateBn} /> : <>
           <div className="no-print grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 sm:flex sm:justify-between">
             <div className="min-w-0">
               <p className="font-sans text-[0.65rem] text-newsprint-muted">
@@ -271,8 +280,8 @@ function AdminStudio() {
               </div>
 
               <div className="overflow-x-auto">
-                <div
-                  style={{ zoom: zoom / 100 }}
+                 <div
+                   style={{ zoom: zoom / 100 }}
                   className="origin-top-left"
                 >
 
@@ -361,6 +370,11 @@ function AdminStudio() {
 
                       {tab === "Style" && (
                         <>
+                           <Field label={`কলামের বিস্তার · ${selected.columnSpan ?? 1} কলাম · ${COLUMN_WIDTHS[(selected.columnSpan ?? 1) - 1]} ইঞ্চি`}>
+                             <select value={selected.columnSpan ?? 1} onChange={(e) => patchSelected({ columnSpan: Number(e.target.value) })} className={inputCls}>
+                               {COLUMN_WIDTHS.map((width, index) => <option key={index} value={index + 1}>{index + 1} কলাম · {width.toFixed(3)}″</option>)}
+                             </select>
+                           </Field>
                           {selected.type === "image" && (
                             <>
                               <div className="grid grid-cols-2 gap-2">
@@ -510,7 +524,7 @@ function AdminStudio() {
                   i === pageIndex ? "border-newsprint-accent" : "border-newsprint-rule"
                 }`}
               >
-                <div className="aspect-[3/4] overflow-hidden">
+                 <div className="aspect-[13/20.5] overflow-hidden">
                   <div className="origin-top-left scale-[0.14] [width:714%]">
                     <NewspaperPage edition={edition} page={p} />
                   </div>
@@ -526,6 +540,7 @@ function AdminStudio() {
               + Add page
             </button>
           </div>
+          </>}
         </main>
       </div>
 
