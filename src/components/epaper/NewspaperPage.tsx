@@ -21,7 +21,7 @@ export function NewspaperPage({
   onDragStartBlock,
 }: Props) {
   return (
-    <div className="bg-newsprint-paper px-6 py-5 text-newsprint-ink shadow-paper">
+    <div className="newspaper-sheet bg-newsprint-paper px-[1.4%] py-[2%] text-newsprint-ink shadow-paper">
       <header className="border-b-[3px] border-newsprint-ink pb-3">
         <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
           <div className="min-w-0">
@@ -40,12 +40,12 @@ export function NewspaperPage({
         </div>
       </header>
 
-      <div className="mt-4 grid gap-4 md:grid-cols-3 md:divide-x md:divide-newsprint-rule">
+      <div className="newsprint-grid mt-4 grid grid-cols-6 gap-x-[1.53%] gap-y-3">
         {page.columns.map((col, ci) => (
           <div
             key={ci}
-            className={`space-y-1 md:px-3 ${
-              editable ? "min-h-40 rounded-sm outline-dashed outline-1 outline-newsprint-rule/70" : ""
+            className={`min-w-0 space-y-1 border-l border-newsprint-rule/60 pl-1 ${
+              editable ? "min-h-40 outline-dashed outline-1 outline-newsprint-rule/70" : ""
             }`}
             onDragOver={editable ? (e) => e.preventDefault() : undefined}
             onDrop={
@@ -63,6 +63,7 @@ export function NewspaperPage({
                 draggable={editable}
                 onDragStart={editable ? () => onDragStartBlock?.(block.id) : undefined}
                 onClick={editable ? () => onSelect?.(block) : undefined}
+                style={{ gridColumn: `span ${Math.min(6 - ci, Math.max(1, block.columnSpan ?? 1))} / span ${Math.min(6 - ci, Math.max(1, block.columnSpan ?? 1))}` }}
                 className={
                   editable
                     ? `cursor-pointer rounded-sm p-1 transition-colors ${
