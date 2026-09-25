@@ -51,7 +51,7 @@ export const loadEditorialEdition = createServerFn({ method: "GET" })
 
 export const saveEditorialEdition = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => inputSchema.parse(input))
+   .validator((input) => inputSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { data: role } = await context.supabase.from("user_roles").select("role").eq("user_id", context.userId).limit(1).maybeSingle();
     if (!role) throw new Error("সম্পাদনার অনুমতি নেই।");

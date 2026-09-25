@@ -17,7 +17,7 @@ export const bootstrapNewsroomRole = createServerFn({ method: "POST" })
 
 export const fetchSourceUrl = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ url: z.string().url() }).parse(input))
+   .validator((input) => z.object({ url: z.string().url() }).parse(input))
   .handler(async ({ data, context }) => {
     await assertEditorial(context.supabase, context.userId);
     const { scrapeArticle } = await import("./newsroom.server");
@@ -33,7 +33,7 @@ export const fetchSourceUrl = createServerFn({ method: "POST" })
 
 export const createAiDraft = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({
+   .validator((input) => z.object({
     sourceId: z.string().uuid().optional(), title: z.string(), text: z.string().min(20), facts: z.string(),
     instructions: z.string(), sourceUrl: z.string().url().optional(), mode: z.enum(["full", "brief", "custom"]),
     fields: z.array(z.string()), section: z.string(),
@@ -53,7 +53,7 @@ export const createAiDraft = createServerFn({ method: "POST" })
 
 export const approveArticle = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ id: z.string().uuid(), title: z.string(), subtitle: z.string(), summary: z.string(), body: z.string(), section: z.string() }).parse(input))
+   .validator((input) => z.object({ id: z.string().uuid(), title: z.string(), subtitle: z.string(), summary: z.string(), body: z.string(), section: z.string() }).parse(input))
   .handler(async ({ data, context }) => {
     await assertEditorial(context.supabase, context.userId);
     const { error } = await context.supabase.from("articles").update({ ...data, status: "approved", approved_by: context.userId, approved_at: new Date().toISOString() }).eq("id", data.id);
