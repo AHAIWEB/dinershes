@@ -274,11 +274,11 @@ function AdminStudio() {
               >
                 ↓ Export PDF
               </button>
-              <Link
-                to="/issue"
+               <Link
+                 to="/issue"
                 className="rounded-md bg-newsprint-ink px-3 py-2 font-sans text-xs text-newsprint-paper"
               >
-                Public issue ↗
+                 প্রকাশিত সংস্করণ ↗
               </Link>
             </div>
           </div>
