@@ -358,8 +358,9 @@ export const newBlock = (type: BlockType): Block =>
               : type === "quote"
                 ? "‘নতুন উদ্ধৃতি’"
                 : "বিভাজক",
-    body: type === "article" ? "এখানে প্রতিবেদনের সারসংক্ষেপ লিখুন।" : undefined,
-    imageSrc: type === "image" ? scan1 : undefined,
+    body: type === "article" ? "এখানে প্রতিবেদনের সারসংক্ষেপ লিখুন।" : "",
+    imageSrc: type === "image" ? scan1 : "",
+
     imageWidth: 320,
     imageHeight: 240,
   });
