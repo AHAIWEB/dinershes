@@ -60,8 +60,7 @@ export const saveEditorialEdition = createServerFn({ method: "POST" })
     if (editionId) {
       const { data: existing } = await context.supabase.from("editions").select("status").eq("id", editionId).single();
       if (!existing || existing.status === "published") throw new Error("প্রকাশিত সংস্করণ পরিবর্তন করা যাবে না।");
-      const { error } = await context.supabase.from("editions").update({ status: data.status, scheduled_for: data.scheduledFor ?? null,
-        published_at: data.status === "published" ? new Date().toISOString() : null,
+      const { error } = await context.supabase.from("editions").update({
         edition_number: data.number, date_bn: data.dateBn, hijri_date: data.hijri,
       }).eq("id", editionId);
       if (error) throw new Error(error.message);
@@ -102,10 +101,8 @@ export const saveEditorialEdition = createServerFn({ method: "POST" })
         if (error) throw new Error(error.message);
       }
     }
-    if (data.status !== "draft") {
-      const { error } = await context.supabase.from("editions").update({ status: data.status, scheduled_for: data.scheduledFor ?? null,
-        published_at: data.status === "published" ? new Date().toISOString() : null }).eq("id", editionId);
-      if (error) throw new Error(error.message);
-    }
+    const { error: statusError } = await context.supabase.from("editions").update({ status: data.status,
+      scheduled_for: data.scheduledFor ?? null, published_at: data.status === "published" ? new Date().toISOString() : null }).eq("id", editionId);
+    if (statusError) throw new Error(statusError.message);
     return { id: editionId };
   });

@@ -52,7 +52,7 @@ const NAV = [
 function AdminStudio() {
   const loadSaved = useServerFn(loadEditorialEdition);
   const saveEdition = useServerFn(saveEditorialEdition);
-  const [edition, setEdition] = useState<Edition>(initialEdition);
+  const [edition, setEdition] = useState<Edition>(() => ({ ...initialEdition, number: "১১" }));
   const [savedId, setSavedId] = useState<string>();
   const [saving, setSaving] = useState(false);
   const [scheduledFor, setScheduledFor] = useState("");
@@ -256,8 +256,9 @@ function AdminStudio() {
           <div className="no-print grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 sm:flex sm:justify-between">
             <div className="min-w-0">
               <p className="font-sans text-[0.65rem] text-newsprint-muted">
-                Edition {edition.number} · {edition.dateBn} · {edition.pages.length} pages
+                 সংস্করণ {edition.number} · {edition.dateBn} · {edition.pages.length} পৃষ্ঠা
               </p>
+               <label className="mt-2 block font-serif-bn text-xs">সংস্করণ নম্বর <input aria-label="সংস্করণ নম্বর" value={edition.number} onChange={(e) => setEdition((prev) => ({ ...prev, number: e.target.value }))} className="ml-2 w-16 border border-newsprint-rule bg-newsprint-paper px-2 py-1" /></label>
               <h1 className="font-serif-bn text-2xl font-bold">Design studio</h1>
               <p className="font-serif-bn text-xs text-newsprint-muted">
                 Reference newspaper grid অনুযায়ী প্রতিটি block সম্পাদনা করুন।
