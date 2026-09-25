@@ -12,3 +12,4 @@
 - Keep public editions in Lovable Cloud with RLS-controlled anonymous reads; local mock editions are editor starting templates only, so unpublished work never appears to readers.
 - Keep editorial access in the separate `user_roles` table and authorize server functions with the signed-in user's role; never grant the first signup admin rights automatically.
 - Keep AI and URL fetching in server-only handlers; this protects provider credentials and rejects unsafe source URLs.
+- Schedule publication in PostgreSQL for complete four-page editions only; the time transition must not depend on an editor keeping a browser open.
