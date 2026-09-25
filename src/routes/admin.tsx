@@ -272,9 +272,10 @@ function AdminStudio() {
 
               <div className="overflow-x-auto">
                 <div
-                  style={{ width: `${(100 / zoom) * 100}%`, transform: `scale(${zoom / 100})` }}
+                  style={{ zoom: zoom / 100 }}
                   className="origin-top-left"
                 >
+
                   <NewspaperPage
                     edition={edition}
                     page={page}
