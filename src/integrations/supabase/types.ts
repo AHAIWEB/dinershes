@@ -14,16 +14,374 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      articles: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          body: string
+          created_at: string
+          created_by: string
+          id: string
+          image_caption: string
+          key_facts: Json
+          section: string
+          source_id: string | null
+          source_note: string
+          status: Database["public"]["Enums"]["article_status"]
+          subtitle: string
+          summary: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          body?: string
+          created_at?: string
+          created_by: string
+          id?: string
+          image_caption?: string
+          key_facts?: Json
+          section?: string
+          source_id?: string | null
+          source_note?: string
+          status?: Database["public"]["Enums"]["article_status"]
+          subtitle?: string
+          summary?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          body?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          image_caption?: string
+          key_facts?: Json
+          section?: string
+          source_id?: string | null
+          source_note?: string
+          status?: Database["public"]["Enums"]["article_status"]
+          subtitle?: string
+          summary?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "articles_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "source_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      edition_pages: {
+        Row: {
+          created_at: string
+          edition_id: string
+          id: string
+          page_number: number
+          section: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          edition_id: string
+          id?: string
+          page_number: number
+          section: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          edition_id?: string
+          id?: string
+          page_number?: number
+          section?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "edition_pages_edition_id_fkey"
+            columns: ["edition_id"]
+            isOneToOne: false
+            referencedRelation: "editions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      editions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          date_bn: string
+          edition_number: string
+          hijri_date: string
+          id: string
+          publication_date: string
+          published_at: string | null
+          scheduled_for: string | null
+          status: Database["public"]["Enums"]["edition_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          date_bn: string
+          edition_number: string
+          hijri_date?: string
+          id?: string
+          publication_date: string
+          published_at?: string | null
+          scheduled_for?: string | null
+          status?: Database["public"]["Enums"]["edition_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          date_bn?: string
+          edition_number?: string
+          hijri_date?: string
+          id?: string
+          publication_date?: string
+          published_at?: string | null
+          scheduled_for?: string | null
+          status?: Database["public"]["Enums"]["edition_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      page_blocks: {
+        Row: {
+          article_id: string | null
+          block_type: string
+          body: string
+          column_span: number
+          column_start: number
+          created_at: string
+          credit: string
+          id: string
+          image_url: string | null
+          label: string
+          page_id: string
+          section: string
+          sort_order: number
+          style: Json
+          updated_at: string
+        }
+        Insert: {
+          article_id?: string | null
+          block_type: string
+          body?: string
+          column_span?: number
+          column_start?: number
+          created_at?: string
+          credit?: string
+          id?: string
+          image_url?: string | null
+          label?: string
+          page_id: string
+          section?: string
+          sort_order?: number
+          style?: Json
+          updated_at?: string
+        }
+        Update: {
+          article_id?: string | null
+          block_type?: string
+          body?: string
+          column_span?: number
+          column_start?: number
+          created_at?: string
+          credit?: string
+          id?: string
+          image_url?: string | null
+          label?: string
+          page_id?: string
+          section?: string
+          sort_order?: number
+          style?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_blocks_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "page_blocks_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "edition_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      share_cards: {
+        Row: {
+          article_id: string | null
+          created_at: string
+          created_by: string | null
+          edition_id: string | null
+          headline: string
+          id: string
+          image_url: string | null
+          preset: string
+          section: string
+          source_note: string
+          updated_at: string
+        }
+        Insert: {
+          article_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edition_id?: string | null
+          headline: string
+          id?: string
+          image_url?: string | null
+          preset: string
+          section?: string
+          source_note?: string
+          updated_at?: string
+        }
+        Update: {
+          article_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edition_id?: string | null
+          headline?: string
+          id?: string
+          image_url?: string | null
+          preset?: string
+          section?: string
+          source_note?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "share_cards_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "share_cards_edition_id_fkey"
+            columns: ["edition_id"]
+            isOneToOne: false
+            referencedRelation: "editions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      source_items: {
+        Row: {
+          created_at: string
+          created_by: string
+          fetch_error: string | null
+          fetch_status: string
+          fetched_at: string | null
+          id: string
+          key_facts: string
+          lead_image_url: string | null
+          raw_text: string
+          source_domain: string | null
+          source_title: string
+          source_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          fetch_error?: string | null
+          fetch_status?: string
+          fetched_at?: string | null
+          id?: string
+          key_facts?: string
+          lead_image_url?: string | null
+          raw_text?: string
+          source_domain?: string | null
+          source_title?: string
+          source_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          fetch_error?: string | null
+          fetch_status?: string
+          fetched_at?: string | null
+          id?: string
+          key_facts?: string
+          lead_image_url?: string | null
+          raw_text?: string
+          source_domain?: string | null
+          source_title?: string
+          source_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_editorial: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "editor" | "designer"
+      article_status:
+        | "source"
+        | "ai_draft"
+        | "approved"
+        | "placed"
+        | "published"
+      edition_status:
+        | "draft"
+        | "review"
+        | "approved"
+        | "scheduled"
+        | "published"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +508,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "editor", "designer"],
+      article_status: ["source", "ai_draft", "approved", "placed", "published"],
+      edition_status: ["draft", "review", "approved", "scheduled", "published"],
+    },
   },
 } as const
