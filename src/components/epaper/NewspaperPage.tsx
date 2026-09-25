@@ -40,7 +40,7 @@ export function NewspaperPage({
         </div>
       </header>
 
-      <div className="newsprint-grid mt-4 grid grid-cols-6 gap-x-[1.53%] gap-y-3">
+      <div className="newsprint-grid mt-4 grid grid-cols-6 gap-y-3">
         {page.columns.map((col, ci) => (
           <div
             key={ci}
@@ -82,7 +82,7 @@ export function NewspaperPage({
       </div>
 
       <footer className="mt-4 flex flex-wrap justify-between gap-2 border-t border-newsprint-rule pt-2 font-serif-bn text-[0.6rem] text-newsprint-muted">
-        <span>দিনের শেষ খবর · e-paper edition {edition.number}</span>
+        <span>দিনের শেষ খবর · সংস্করণ {edition.number}</span>
         <span>পৃষ্ঠা {page.no} · {page.title}</span>
       </footer>
     </div>

@@ -12,13 +12,7 @@ export const bootstrapNewsroomRole = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const { data: ownRole } = await context.supabase.from("user_roles").select("role").eq("user_id", context.userId).maybeSingle();
     if (ownRole) return ownRole.role;
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { count } = await supabaseAdmin.from("user_roles").select("id", { count: "exact", head: true });
-    if (count === 0) {
-      await supabaseAdmin.from("user_roles").insert({ user_id: context.userId, role: "admin" });
-      return "admin" as const;
-    }
-    throw new Error("অ্যাডমিন এখনো এই অ্যাকাউন্টে newsroom role দেননি।");
+    throw new Error("এই অ্যাকাউন্টে সম্পাদকের অনুমতি দেওয়া হয়নি।");
   });
 
 export const fetchSourceUrl = createServerFn({ method: "POST" })
