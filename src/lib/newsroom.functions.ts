@@ -30,7 +30,7 @@ export const fetchSourceUrl = createServerFn({ method: "POST" })
     const scraped = await scrapeArticle(data.url);
     const { data: saved, error } = await context.supabase.from("source_items").insert({
       source_url: scraped.url, source_domain: scraped.domain, source_title: scraped.title,
-      raw_text: scraped.text, lead_image_url: scraped.image, fetch_status: "fetched",
+      raw_text: scraped.text, lead_image_url: scraped.image ?? null, fetch_status: "fetched",
       fetched_at: scraped.fetchedAt, created_by: context.userId,
     }).select("id").single();
     if (error) throw new Error(error.message);
@@ -46,9 +46,9 @@ export const createAiDraft = createServerFn({ method: "POST" })
   }).parse(input))
   .handler(async ({ data, context }) => {
     await assertEditorial(context.supabase, context.userId);
-    const draft = await generateNewsDraft(data);
+    const draft = await generateNewsDraft({ ...data, ...(data.sourceUrl ? { sourceUrl: data.sourceUrl } : {}) });
     const { data: saved, error } = await context.supabase.from("articles").insert({
-      source_id: data.sourceId, title: draft.title, subtitle: draft.subtitle, summary: draft.summary,
+      source_id: data.sourceId ?? null, title: draft.title, subtitle: draft.subtitle, summary: draft.summary,
       body: draft.body, key_facts: draft.keyFacts, image_caption: draft.imageCaption,
       source_note: draft.sourceNote, section: data.section, status: "ai_draft", created_by: context.userId,
     }).select("id").single();
