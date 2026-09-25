@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { AuthGate } from "@/components/epaper/AuthGate";
 import { NewsroomPanel } from "@/components/epaper/NewsroomPanel";
 import { ShareCardStudio } from "@/components/epaper/ShareCardStudio";
 import { supabase } from "@/integrations/supabase/client";
 import { COLUMN_WIDTHS } from "@/lib/epaper-data";
+import { loadEditorialEdition, saveEditorialEdition } from "@/lib/editor.functions";
 import { TopBar } from "@/components/epaper/TopBar";
 import { NewspaperPage } from "@/components/epaper/NewspaperPage";
 import {
@@ -48,7 +50,12 @@ const NAV = [
 ];
 
 function AdminStudio() {
+  const loadSaved = useServerFn(loadEditorialEdition);
+  const saveEdition = useServerFn(saveEditorialEdition);
   const [edition, setEdition] = useState<Edition>(initialEdition);
+  const [savedId, setSavedId] = useState<string>();
+  const [saving, setSaving] = useState(false);
+  const [scheduledFor, setScheduledFor] = useState("");
   const [pageIndex, setPageIndex] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>("b2");
   const [tab, setTab] = useState<"Content" | "Style" | "Settings">("Content");
@@ -59,12 +66,44 @@ function AdminStudio() {
   >(null);
   const [toast, setToast] = useState<string | null>(null);
 
-  const page = edition.pages[pageIndex]!;
+  useEffect(() => {
+    let mounted = true;
+    loadSaved().then((saved) => {
+      if (!saved || !mounted) return;
+      setSavedId(saved.edition.id);
+      setScheduledFor(saved.edition.scheduled_for ?? "");
+      setEdition({ id: saved.edition.id, number: saved.edition.edition_number,
+        dateBn: saved.edition.date_bn, hijri: saved.edition.hijri_date,
+        status: saved.edition.status as Edition["status"],
+        pages: saved.pages.map((p) => ({ id: p.id, no: p.page_number, title: p.title, section: p.section, columns: p.columns as Block[][] })),
+      });
+    }).catch((error) => { if (mounted) notify(error instanceof Error ? error.message : "সংরক্ষিত সংস্করণ খোলা যায়নি।"); });
+    return () => { mounted = false; };
+  }, [loadSaved]);
+
+  const page = edition.pages[pageIndex] ?? edition.pages[0];
+  if (!page) return null;
   const selected = page.columns.flat().find((b) => b.id === selectedId) ?? null;
 
   const notify = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 2200);
+  };
+
+  const persist = async (status: Edition["status"]) => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      const result = await saveEdition({ data: { ...(savedId ? { editionId: savedId } : {}), number: edition.number,
+        dateBn: edition.dateBn, hijri: edition.hijri, status,
+        ...(status === "scheduled" && scheduledFor ? { scheduledFor: new Date(scheduledFor).toISOString() } : {}),
+        pages: edition.pages.map((p) => ({ title: p.title, section: p.section, columns: p.columns })),
+      } });
+      setSavedId(result.id);
+      setEdition((prev) => ({ ...prev, status }));
+      notify(status === "published" ? "সংস্করণ প্রকাশিত হয়েছে" : "সংস্করণ সংরক্ষিত হয়েছে");
+    } catch (error) { notify(error instanceof Error ? error.message : "সংরক্ষণ করা যায়নি।"); }
+    finally { setSaving(false); }
   };
 
   const updatePage = (fn: (cols: Block[][]) => Block[][]) =>
@@ -108,6 +147,7 @@ function AdminStudio() {
   };
 
   const addPage = () => {
+    if (edition.pages.length >= 4) return notify("সংস্করণে চারটি পৃষ্ঠা থাকবে।");
     setEdition((prev) => ({
       ...prev,
       pages: [
@@ -152,34 +192,31 @@ function AdminStudio() {
       <div className="no-print border-b border-newsprint-rule bg-newsprint-paper">
         <div className="mx-auto flex max-w-[1500px] flex-wrap items-center gap-2 px-4 py-2">
           <span className="rounded-full bg-newsprint-tint px-3 py-1 font-sans text-xs text-newsprint-accent">
-            {edition.status === "draft" ? "Draft issue" : edition.status}
+             {edition.status === "draft" ? "খসড়া" : edition.status === "review" ? "যাচাই" : edition.status === "scheduled" ? "নির্ধারিত" : "প্রকাশিত"}
           </span>
           <span className="font-serif-bn text-xs text-newsprint-muted">{edition.dateBn}</span>
           <div className="ml-auto flex flex-wrap gap-2">
             {[
-              { l: "↓ Save draft", s: "draft" as const },
-              { l: "◉ Review", s: "review" as const },
-              { l: "◔ Schedule", s: "scheduled" as const },
+               { l: "↓ খসড়া সংরক্ষণ", s: "draft" as const },
+               { l: "◉ যাচাইয়ের জন্য", s: "review" as const },
+               { l: "◔ সময় নির্ধারণ", s: "scheduled" as const },
             ].map((b) => (
               <button
                 key={b.l}
-                onClick={() => {
-                  setEdition((p) => ({ ...p, status: b.s }));
-                  notify(`সংস্করণ ${b.s} হিসেবে সংরক্ষিত`);
-                }}
+                 onClick={() => persist(b.s)}
+                 disabled={saving}
                 className="rounded-md border border-newsprint-rule px-3 py-1.5 font-sans text-xs"
               >
                 {b.l}
               </button>
             ))}
-            <button
-              onClick={() => {
-                setEdition((p) => ({ ...p, status: "published" }));
-                notify("সংস্করণ publish হয়েছে");
-              }}
+             <input aria-label="প্রকাশের সময়" type="datetime-local" value={scheduledFor ? scheduledFor.slice(0,16) : ""} onChange={(e) => setScheduledFor(e.target.value)} className="border border-newsprint-rule bg-newsprint-paper px-2 font-serif-bn text-xs" />
+             <button
+               onClick={() => persist("published")}
+               disabled={saving}
               className="rounded-md bg-newsprint-accent px-3 py-1.5 font-sans text-xs text-newsprint-paper"
             >
-              ↗ Publish
+               ↗ প্রকাশ করুন
             </button>
           </div>
         </div>
@@ -208,8 +245,7 @@ function AdminStudio() {
             ))}
           </nav>
           <div className="mt-6 hidden px-2 font-sans text-[0.6rem] leading-relaxed opacity-60 lg:block">
-            <p>Design approval prototype</p>
-            <p>Build 0.1 · Local demo</p>
+            <p>দিনের শেষ খবর · নিউজরুম</p>
             <button onClick={() => supabase.auth.signOut().then(() => window.location.reload())} className="mt-3 underline">প্রস্থান</button>
           </div>
         </aside>
@@ -533,12 +569,12 @@ function AdminStudio() {
                 <p className="font-serif-bn text-[0.6rem] text-newsprint-muted">{p.title}</p>
               </button>
             ))}
-            <button
+             {edition.pages.length < 4 && <button
               onClick={addPage}
               className="grid w-32 shrink-0 place-items-center border border-dashed border-newsprint-rule font-sans text-xs text-newsprint-muted"
             >
-              + Add page
-            </button>
+               + পৃষ্ঠা যোগ করুন
+             </button>}
           </div>
           </>}
         </main>
