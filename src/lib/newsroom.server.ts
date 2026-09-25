@@ -5,12 +5,12 @@ import { createRunIdFetch } from "./gateway/run-id.ts";
 
 export type NewsroomMode = "full" | "brief" | "custom";
 
-const blockedHosts = /^(localhost|0\.0\.0\.0|127\.|10\.|192\.168\.|169\.254\.|::1$)/i;
+const blockedHosts = /^(localhost|.*\.localhost|.*\.local|.*\.internal|0\.0\.0\.0|127\.|10\.|192\.168\.|169\.254\.|::1$)/i;
 const blockedPrivate172 = /^172\.(1[6-9]|2\d|3[01])\./;
 
 function safeUrl(value: string) {
   const url = new URL(value);
-  if (!/^https?:$/.test(url.protocol) || blockedHosts.test(url.hostname) || blockedPrivate172.test(url.hostname)) {
+  if (!/^https?:$/.test(url.protocol) || blockedHosts.test(url.hostname) || blockedPrivate172.test(url.hostname) || /^\d+(?:\.\d+){3}$/.test(url.hostname) || url.hostname.startsWith("[") || !url.hostname.includes(".")) {
     throw new Error("এই ঠিকানা থেকে খবর সংগ্রহ নিরাপদ নয়।");
   }
   return url;
@@ -45,10 +45,17 @@ export async function scrapeArticle(sourceUrl: string) {
     ?? document.querySelector("h1")?.textContent?.trim()
     ?? document.title;
   const image = document.querySelector('meta[property="og:image"]')?.getAttribute("content") ?? undefined;
+  let imageUrl: string | undefined;
+  if (image) {
+    try {
+      const candidate = new URL(image, url);
+      if (candidate.protocol === "https:") imageUrl = candidate.toString();
+    } catch { /* Invalid image metadata should not prevent reading the article. */ }
+  }
   return {
     title: title.trim().slice(0, 300),
     text,
-    image: image ? new URL(image, url).toString() : undefined,
+    image: imageUrl,
     url: url.toString(),
     domain: url.hostname.replace(/^www\./, ""),
     fetchedAt: new Date().toISOString(),

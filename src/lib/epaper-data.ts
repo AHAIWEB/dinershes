@@ -345,12 +345,12 @@ export const initialEdition: Edition = {
 export const COLUMN_WIDTHS = [2, 4.213, 6.410, 8.607, 10.803, 13];
 
 export const blockPalette: { type: BlockType; name: string; hint: string }[] = [
-  { type: "headline", name: "Headline", hint: "শিরোনাম" },
-  { type: "article", name: "Article", hint: "প্রতিবেদন" },
-  { type: "image", name: "Image", hint: "ছবি" },
-  { type: "ad", name: "Advertisement", hint: "বিজ্ঞাপন" },
-  { type: "quote", name: "Quote", hint: "উদ্ধৃতি" },
-  { type: "divider", name: "Divider", hint: "রুল" },
+  { type: "headline", name: "শিরোনাম", hint: "বড় খবর" },
+  { type: "article", name: "প্রতিবেদন", hint: "সংবাদ" },
+  { type: "image", name: "ছবি", hint: "আলোকচিত্র" },
+  { type: "ad", name: "বিজ্ঞাপন", hint: "প্রচার" },
+  { type: "quote", name: "উদ্ধৃতি", hint: "বক্তব্য" },
+  { type: "divider", name: "বিভাজক", hint: "রুল" },
 ];
 
 export const newBlock = (type: BlockType): Block =>

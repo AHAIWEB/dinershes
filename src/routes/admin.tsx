@@ -22,18 +22,18 @@ import {
 export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
-      { title: "Design studio · দিনের শেষ খবর অ্যাডমিন" },
+      { title: "পৃষ্ঠা ডিজাইন · দিনের শেষ খবর" },
       {
         name: "description",
         content:
-          "দিনের শেষ খবর ই-পেপারের অ্যাডমিন প্যানেল—drag-and-drop page builder, article, media, draft ও scheduled publish।",
+          "দিনের শেষ খবর ই-পেপারের সম্পাদকীয় পৃষ্ঠা, সংবাদ, খসড়া ও প্রকাশনা পরিচালনা করুন।",
       },
-      { property: "og:title", content: "Design studio · দিনের শেষ খবর অ্যাডমিন" },
+      { property: "og:title", content: "পৃষ্ঠা ডিজাইন · দিনের শেষ খবর" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       {
         property: "og:description",
-        content: "ই-পেপারের প্রতিটি block, column ও spacing নিয়ন্ত্রণ করুন এক জায়গা থেকে।",
+        content: "ই-পেপারের প্রতিটি সংবাদ, কলাম ও পৃষ্ঠার বিন্যাস নিয়ন্ত্রণ করুন।",
       },
     ],
   }),
@@ -41,12 +41,9 @@ export const Route = createFileRoute("/admin")({
 });
 
 const NAV = [
-  { label: "Dashboard", icon: "⌂" },
-  { label: "Editions", icon: "▦" },
-  { label: "Articles", icon: "≡", badge: "12" },
-  { label: "Media library", icon: "▤" },
-  { label: "Users & roles", icon: "⚇" },
-  { label: "Settings", icon: "⚙" },
+  { label: "পৃষ্ঠা ডিজাইন", icon: "▦" },
+  { label: "AI নিউজরুম", icon: "≡" },
+  { label: "শেয়ার কার্ড", icon: "▤" },
 ];
 
 function AdminStudio() {
@@ -59,9 +56,9 @@ function AdminStudio() {
   const [scheduledFor, setScheduledFor] = useState("");
   const [pageIndex, setPageIndex] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>("b2");
-  const [tab, setTab] = useState<"Content" | "Style" | "Settings">("Content");
+  const [tab, setTab] = useState<"বিষয়বস্তু" | "বিন্যাস" | "সেটিংস">("বিষয়বস্তু");
   const [zoom, setZoom] = useState(72);
-  const [nav, setNav] = useState("Editions");
+  const [nav, setNav] = useState("পৃষ্ঠা ডিজাইন");
   const [dragging, setDragging] = useState<
     { kind: "new"; type: BlockType } | { kind: "move"; id: string } | null
   >(null);
@@ -127,7 +124,7 @@ function AdminStudio() {
       block.section = page.section;
       updatePage((cols) => cols.map((c, i) => (i === columnIndex ? [...c, block] : c)));
       setSelectedId(block.id);
-      notify(`${dragging.type} block যোগ হয়েছে`);
+      notify("অংশ যোগ হয়েছে");
     } else {
       const moved = page.columns.flat().find((b) => b.id === dragging.id);
       if (!moved) return;
@@ -138,7 +135,7 @@ function AdminStudio() {
             : c.filter((b) => b.id !== moved.id),
         ),
       );
-      notify("Block সরানো হয়েছে");
+      notify("অংশ সরানো হয়েছে");
     }
     setDragging(null);
   };
@@ -146,7 +143,7 @@ function AdminStudio() {
   const removeSelected = () => {
     updatePage((cols) => cols.map((c) => c.filter((b) => b.id !== selectedId)));
     setSelectedId(null);
-    notify("Block মুছে ফেলা হয়েছে");
+    notify("অংশ মুছে ফেলা হয়েছে");
   };
 
   const addPage = () => {
@@ -227,9 +224,7 @@ function AdminStudio() {
 
       <div className="mx-auto flex max-w-[1500px] flex-col lg:flex-row">
         <aside className="no-print w-full shrink-0 border-b border-newsprint-rule bg-newsprint-ink px-3 py-4 text-newsprint-paper lg:w-56 lg:border-b-0 lg:border-r">
-          <p className="px-2 font-sans text-[0.55rem] uppercase tracking-[0.25em] opacity-60">
-            Workspace
-          </p>
+           <p className="px-2 font-serif-bn text-xs opacity-60">সম্পাদকীয় কক্ষ</p>
           <nav className="mt-3 flex gap-1 overflow-x-auto lg:flex-col">
             {NAV.map((n) => (
               <button
@@ -243,7 +238,6 @@ function AdminStudio() {
               >
                 <span>{n.icon}</span>
                 <span>{n.label}</span>
-                {n.badge && <span className="ml-auto opacity-60">{n.badge}</span>}
               </button>
             ))}
           </nav>
@@ -254,17 +248,16 @@ function AdminStudio() {
         </aside>
 
         <main className="min-w-0 flex-1 px-4 py-5">
-          <div className="no-print mb-5 flex gap-2 border-b border-newsprint-rule pb-3 font-serif-bn text-sm"><button onClick={() => setNav("Editions")} className={nav === "Editions" ? "font-bold text-newsprint-accent" : ""}>পৃষ্ঠা ডিজাইন</button><button onClick={() => setNav("Articles")} className={nav === "Articles" ? "font-bold text-newsprint-accent" : ""}>AI নিউজরুম</button><button onClick={() => setNav("Share")} className={nav === "Share" ? "font-bold text-newsprint-accent" : ""}>শেয়ার কার্ড</button></div>
-          {nav === "Articles" ? <NewsroomPanel onPlace={(draft) => { const block = newBlock("article"); block.label = draft.title; block.body = `${draft.subtitle}\n${draft.summary}\n${draft.body}`; block.section = draft.section; block.columnSpan = 2; updatePage((cols) => cols.map((col, index) => index === 0 ? [...col, block] : col)); setSelectedId(block.id); setNav("Editions"); notify("অনুমোদিত সংবাদ পাতায় বসেছে"); }} /> : nav === "Share" ? <ShareCardStudio headline={page.columns.flat().find((b) => b.type === "headline")?.label ?? "দিনের শেষ খবর"} section={page.section} date={edition.dateBn} /> : <>
+          {nav === "AI নিউজরুম" ? <NewsroomPanel onPlace={(draft) => { const block = newBlock("article"); block.label = draft.title; block.body = `${draft.subtitle}\n${draft.summary}\n${draft.body}`; block.section = draft.section; block.columnSpan = 2; updatePage((cols) => cols.map((col, index) => index === 0 ? [...col, block] : col)); setSelectedId(block.id); setNav("পৃষ্ঠা ডিজাইন"); notify("অনুমোদিত সংবাদ পাতায় বসেছে"); }} /> : nav === "শেয়ার কার্ড" ? <ShareCardStudio headline={page.columns.flat().find((b) => b.type === "headline")?.label ?? "দিনের শেষ খবর"} section={page.section} date={edition.dateBn} /> : <>
           <div className="no-print grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 sm:flex sm:justify-between">
             <div className="min-w-0">
               <p className="font-sans text-[0.65rem] text-newsprint-muted">
                  সংস্করণ {edition.number} · {edition.dateBn} · {edition.pages.length} পৃষ্ঠা
               </p>
                <label className="mt-2 block font-serif-bn text-xs">সংস্করণ নম্বর <input aria-label="সংস্করণ নম্বর" value={edition.number} onChange={(e) => setEdition((prev) => ({ ...prev, number: e.target.value }))} className="ml-2 w-16 border border-newsprint-rule bg-newsprint-paper px-2 py-1" /></label>
-              <h1 className="font-serif-bn text-2xl font-bold">Design studio</h1>
+               <h1 className="font-serif-bn text-2xl font-bold">পৃষ্ঠা ডিজাইন</h1>
               <p className="font-serif-bn text-xs text-newsprint-muted">
-                Reference newspaper grid অনুযায়ী প্রতিটি block সম্পাদনা করুন।
+                 ছয় কলামের ছাপার পাতায় প্রতিটি অংশ সাজান।
               </p>
             </div>
             <div className="flex shrink-0 flex-wrap gap-2">
@@ -272,7 +265,7 @@ function AdminStudio() {
                 onClick={() => window.print()}
                 className="rounded-md border border-newsprint-rule px-3 py-2 font-sans text-xs"
               >
-                ↓ Export PDF
+                 ↓ পিডিএফ হিসেবে সংরক্ষণ
               </button>
                <Link
                  to="/issue"
@@ -286,10 +279,10 @@ function AdminStudio() {
           <div className="mt-4 border border-newsprint-rule bg-newsprint-tint">
             <div className="no-print flex flex-wrap items-center gap-2 border-b border-newsprint-rule px-3 py-2">
               <span className="font-serif-bn text-sm font-bold">
-                Page {String(page.no).padStart(2, "0")} · {page.title}
+                 পৃষ্ঠা {page.no} · {page.title}
               </span>
               <span className="font-sans text-[0.65rem] text-newsprint-muted">
-                Drag blocks into columns · click to edit
+                 অংশ টেনে কলামে রাখুন · সম্পাদনা করতে নির্বাচন করুন
               </span>
               <div className="ml-auto flex items-center gap-2 font-sans text-xs">
                 <button onClick={() => setZoom((z) => Math.max(40, z - 8))}>−</button>
@@ -300,9 +293,9 @@ function AdminStudio() {
 
             <div className="grid gap-3 p-3 lg:grid-cols-[170px_minmax(0,1fr)_250px]">
               <div className="no-print rounded bg-newsprint-ink p-3 text-newsprint-paper">
-                <p className="font-sans text-xs font-semibold">Draggable blocks</p>
+                 <p className="font-serif-bn text-xs font-semibold">পাতার অংশ</p>
                 <p className="mt-1 font-serif-bn text-[0.62rem] opacity-70">
-                  Block টেনে canvas-এর যেকোনো column-এ ছেড়ে দিন।
+                   অংশ টেনে পাতার যেকোনো কলামে ছেড়ে দিন।
                 </p>
                 <div className="mt-3 space-y-2">
                   {blockPalette.map((b) => (
@@ -338,15 +331,15 @@ function AdminStudio() {
               </div>
 
               <div className="no-print rounded border border-newsprint-rule bg-newsprint-paper p-3">
-                <p className="font-sans text-sm font-semibold">Element settings</p>
+                 <p className="font-serif-bn text-sm font-semibold">অংশের সেটিংস</p>
                 <p className="font-serif-bn text-[0.62rem] text-newsprint-muted">
-                  {selected ? `${selected.label} · ${selected.section}` : "একটি block নির্বাচন করুন"}
+                   {selected ? `${selected.label} · ${selected.section}` : "একটি অংশ নির্বাচন করুন"}
                 </p>
 
                 {selected && (
                   <>
                     <div className="mt-3 flex border-b border-newsprint-rule">
-                      {(["Content", "Style", "Settings"] as const).map((t) => (
+                       {(["বিষয়বস্তু", "বিন্যাস", "সেটিংস"] as const).map((t) => (
                         <button
                           key={t}
                           onClick={() => setTab(t)}
@@ -362,16 +355,16 @@ function AdminStudio() {
                     </div>
 
                     <div className="mt-3 space-y-3 font-sans text-[0.68rem]">
-                      {tab === "Content" && (
+                       {tab === "বিষয়বস্তু" && (
                         <>
-                          <Field label="Headline / label">
+                           <Field label="শিরোনাম">
                             <input
                               value={selected.label}
                               onChange={(e) => patchSelected({ label: e.target.value })}
                               className={inputCls}
                             />
                           </Field>
-                          <Field label="Section · navigation tag">
+                           <Field label="বিভাগ">
                             <select
                               value={selected.section}
                               onChange={(e) => patchSelected({ section: e.target.value })}
@@ -382,7 +375,7 @@ function AdminStudio() {
                               ))}
                             </select>
                           </Field>
-                          <Field label="Summary / caption">
+                           <Field label="সারাংশ / ক্যাপশন">
                             <textarea
                               rows={4}
                               value={selected.body ?? selected.credit ?? ""}
@@ -397,7 +390,7 @@ function AdminStudio() {
                             />
                           </Field>
                           {selected.type === "image" && (
-                            <Field label="Image source (URL)">
+                             <Field label="ছবির ঠিকানা">
                               <input
                                 value={selected.imageSrc ?? ""}
                                 onChange={(e) => patchSelected({ imageSrc: e.target.value })}
@@ -408,7 +401,7 @@ function AdminStudio() {
                         </>
                       )}
 
-                      {tab === "Style" && (
+                       {tab === "বিন্যাস" && (
                         <>
                            <Field label={`কলামের বিস্তার · ${selected.columnSpan ?? 1} কলাম · ${COLUMN_WIDTHS[(selected.columnSpan ?? 1) - 1]} ইঞ্চি`}>
                              <select value={selected.columnSpan ?? 1} onChange={(e) => patchSelected({ columnSpan: Number(e.target.value) })} className={inputCls}>
@@ -418,7 +411,7 @@ function AdminStudio() {
                           {selected.type === "image" && (
                             <>
                               <div className="grid grid-cols-2 gap-2">
-                                <Field label="Width (px)">
+                                 <Field label="প্রস্থ (পিক্সেল)">
                                   <input
                                     type="number"
                                     value={selected.imageWidth ?? 320}
@@ -428,7 +421,7 @@ function AdminStudio() {
                                     className={inputCls}
                                   />
                                 </Field>
-                                <Field label="Height (px)">
+                                 <Field label="উচ্চতা (পিক্সেল)">
                                   <input
                                     type="number"
                                     value={selected.imageHeight ?? 240}
@@ -439,7 +432,7 @@ function AdminStudio() {
                                   />
                                 </Field>
                               </div>
-                              <Field label="Image style">
+                               <Field label="ছবির ধরন">
                                 <div className="flex rounded border border-newsprint-rule">
                                   {(["cover", "contain", "fill"] as const).map((f) => (
                                     <button
@@ -451,12 +444,12 @@ function AdminStudio() {
                                           : ""
                                       }`}
                                     >
-                                      {f}
+                                       {{ cover: "ভরে", contain: "সম্পূর্ণ", fill: "প্রসারিত" }[f]}
                                     </button>
                                   ))}
                                 </div>
                               </Field>
-                              <Field label={`Corners rounded · ${selected.radius ?? 0}px`}>
+                               <Field label={`কোণ · ${selected.radius ?? 0} পিক্সেল`}>
                                 <input
                                   type="range"
                                   min={0}
@@ -468,7 +461,7 @@ function AdminStudio() {
                               </Field>
                             </>
                           )}
-                          <Field label={`Font scale · ${(selected.fontScale ?? 1).toFixed(2)}×`}>
+                           <Field label={`অক্ষরের মাপ · ${(selected.fontScale ?? 1).toFixed(2)}×`}>
                             <input
                               type="range"
                               min={0.7}
@@ -479,7 +472,7 @@ function AdminStudio() {
                               className="w-full"
                             />
                           </Field>
-                          <Field label="Alignment">
+                           <Field label="লেখার অবস্থান">
                             <div className="flex rounded border border-newsprint-rule">
                               {(["left", "center", "right"] as const).map((a) => (
                                 <button
@@ -489,19 +482,19 @@ function AdminStudio() {
                                     selected.align === a ? "bg-newsprint-ink text-newsprint-paper" : ""
                                   }`}
                                 >
-                                  {a}
+                                   {{ left: "বামে", center: "মাঝে", right: "ডানে" }[a]}
                                 </button>
                               ))}
                             </div>
                           </Field>
-                          <Field label="Margins">
+                           <Field label="বাইরের ফাঁক">
                             <div className="grid grid-cols-4 gap-1">
                               {(["top", "right", "bottom", "left"] as const).map((s) => (
                                 <div key={s}>{spacingField("margin", s)}</div>
                               ))}
                             </div>
                           </Field>
-                          <Field label="Padding">
+                           <Field label="ভেতরের ফাঁক">
                             <div className="grid grid-cols-4 gap-1">
                               {(["top", "right", "bottom", "left"] as const).map((s) => (
                                 <div key={s}>{spacingField("padding", s)}</div>
@@ -515,18 +508,18 @@ function AdminStudio() {
                                 checked={!!selected.invert}
                                 onChange={(e) => patchSelected({ invert: e.target.checked })}
                               />
-                              Dark advertisement style
+                               গাঢ় বিজ্ঞাপন
                             </label>
                           )}
                         </>
                       )}
 
-                      {tab === "Settings" && (
+                       {tab === "সেটিংস" && (
                         <>
                           <p className="font-serif-bn text-newsprint-muted">
-                            Block ID: {selected.id} · type: {selected.type}
+                             অংশ নম্বর: {selected.id} · ধরন: {blockPalette.find((item) => item.type === selected.type)?.name}
                           </p>
-                          <Field label="Page title">
+                           <Field label="পৃষ্ঠার শিরোনাম">
                             <input
                               value={page.title}
                               onChange={(e) =>
@@ -544,7 +537,7 @@ function AdminStudio() {
                             onClick={removeSelected}
                             className="w-full rounded border border-newsprint-accent px-2 py-1.5 text-newsprint-accent"
                           >
-                            Block মুছে ফেলুন
+                             অংশ মুছে ফেলুন
                           </button>
                         </>
                       )}
@@ -569,7 +562,7 @@ function AdminStudio() {
                     <NewspaperPage edition={edition} page={p} />
                   </div>
                 </div>
-                <p className="mt-1 font-sans text-[0.65rem] font-semibold">Page {p.no}</p>
+                 <p className="mt-1 font-serif-bn text-[0.65rem] font-semibold">পৃষ্ঠা {p.no}</p>
                 <p className="font-serif-bn text-[0.6rem] text-newsprint-muted">{p.title}</p>
               </button>
             ))}
