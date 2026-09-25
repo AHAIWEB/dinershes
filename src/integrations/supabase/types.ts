@@ -359,7 +359,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      publish_due_editions: { Args: never; Returns: number }
     }
     Enums: {
       app_role: "admin" | "editor" | "designer"

@@ -82,6 +82,7 @@ export async function generateNewsDraft(input: {
   const result = streamText({
     model: provider.responses("openai/gpt-6-astra"),
     prompt,
+    maxRetries: 0,
     providerOptions: { openai: { forceReasoning: true, reasoningEffort: "medium", reasoningSummary: "auto", store: false, include: ["reasoning.encrypted_content"] } },
   });
   const raw = await result.text;

@@ -27,7 +27,7 @@ export function BlockView({ block }: { block: Block }) {
     return (
       <figure style={style}>
         <div className="mb-1 flex items-center justify-between font-sans text-[0.55rem] uppercase tracking-[0.2em] text-newsprint-muted">
-          <span>Image</span>
+           <span>ছবি</span>
           <span>{block.section}</span>
         </div>
         <img

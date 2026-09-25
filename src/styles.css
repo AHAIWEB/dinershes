@@ -171,11 +171,14 @@
 
 @media print {
   @page { size: 13in 20.5in; margin: 0; }
+  body, main { margin: 0 !important; padding: 0 !important; max-width: none !important; }
+  .print-page + .print-page { margin-top: 0 !important; }
   .no-print {
     display: none !important;
   }
   .print-page {
     break-after: page;
+    page-break-after: always;
     box-shadow: none !important;
     width: 13in !important;
     height: 20.5in !important;
@@ -183,10 +186,8 @@
   }
   .newspaper-sheet { width: 13in !important; height: 20.5in !important; box-shadow: none !important; }
   * { print-color-adjust: exact !important; -webkit-print-color-adjust: exact !important; }
-  body {
-    background: #fff;
-  }
+  body { background: var(--paper); }
 }
 
 .newspaper-sheet { width: 100%; aspect-ratio: 13 / 20.5; overflow: hidden; }
-.newsprint-grid { min-height: 76%; }
+.newsprint-grid { --column-gap: clamp(2px, 1.53vw, 20px); column-gap: var(--column-gap); min-height: 76%; }

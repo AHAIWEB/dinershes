@@ -52,7 +52,8 @@ const NAV = [
 function AdminStudio() {
   const loadSaved = useServerFn(loadEditorialEdition);
   const saveEdition = useServerFn(saveEditorialEdition);
-  const [edition, setEdition] = useState<Edition>(initialEdition);
+   const [edition, setEdition] = useState<Edition>(() => ({ ...initialEdition, number: "১১" }));
+   const [loaded, setLoaded] = useState(false);
   const [savedId, setSavedId] = useState<string>();
   const [saving, setSaving] = useState(false);
   const [scheduledFor, setScheduledFor] = useState("");
@@ -69,7 +70,8 @@ function AdminStudio() {
   useEffect(() => {
     let mounted = true;
     loadSaved().then((saved) => {
-      if (!saved || !mounted) return;
+       if (!mounted) return;
+       if (!saved) { setLoaded(true); return; }
       setSavedId(saved.edition.id);
       setScheduledFor(saved.edition.scheduled_for ?? "");
       setEdition({ id: saved.edition.id, number: saved.edition.edition_number,
@@ -77,7 +79,8 @@ function AdminStudio() {
         status: saved.edition.status as Edition["status"],
         pages: saved.pages.map((p) => ({ id: p.id, no: p.page_number, title: p.title, section: p.section, columns: p.columns as Block[][] })),
       });
-    }).catch((error) => { if (mounted) notify(error instanceof Error ? error.message : "সংরক্ষিত সংস্করণ খোলা যায়নি।"); });
+       setLoaded(true);
+     }).catch((error) => { if (mounted) notify(error instanceof Error ? error.message : "সংরক্ষিত সংস্করণ খোলা যায়নি।"); });
     return () => { mounted = false; };
   }, [loadSaved]);
 
@@ -91,7 +94,7 @@ function AdminStudio() {
   };
 
   const persist = async (status: Edition["status"]) => {
-    if (saving) return;
+     if (saving || !loaded) return;
     setSaving(true);
     try {
       const result = await saveEdition({ data: { ...(savedId ? { editionId: savedId } : {}), number: edition.number,
@@ -204,7 +207,7 @@ function AdminStudio() {
               <button
                 key={b.l}
                  onClick={() => persist(b.s)}
-                 disabled={saving}
+                  disabled={saving || !loaded || edition.status === "published"}
                 className="rounded-md border border-newsprint-rule px-3 py-1.5 font-sans text-xs"
               >
                 {b.l}
@@ -213,7 +216,7 @@ function AdminStudio() {
              <input aria-label="প্রকাশের সময়" type="datetime-local" value={scheduledFor ? scheduledFor.slice(0,16) : ""} onChange={(e) => setScheduledFor(e.target.value)} className="border border-newsprint-rule bg-newsprint-paper px-2 font-serif-bn text-xs" />
              <button
                onClick={() => persist("published")}
-               disabled={saving}
+                disabled={saving || !loaded || edition.status === "published"}
               className="rounded-md bg-newsprint-accent px-3 py-1.5 font-sans text-xs text-newsprint-paper"
             >
                ↗ প্রকাশ করুন
@@ -256,8 +259,9 @@ function AdminStudio() {
           <div className="no-print grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 sm:flex sm:justify-between">
             <div className="min-w-0">
               <p className="font-sans text-[0.65rem] text-newsprint-muted">
-                Edition {edition.number} · {edition.dateBn} · {edition.pages.length} pages
+                 সংস্করণ {edition.number} · {edition.dateBn} · {edition.pages.length} পৃষ্ঠা
               </p>
+               <label className="mt-2 block font-serif-bn text-xs">সংস্করণ নম্বর <input aria-label="সংস্করণ নম্বর" value={edition.number} onChange={(e) => setEdition((prev) => ({ ...prev, number: e.target.value }))} className="ml-2 w-16 border border-newsprint-rule bg-newsprint-paper px-2 py-1" /></label>
               <h1 className="font-serif-bn text-2xl font-bold">Design studio</h1>
               <p className="font-serif-bn text-xs text-newsprint-muted">
                 Reference newspaper grid অনুযায়ী প্রতিটি block সম্পাদনা করুন।
@@ -270,11 +274,11 @@ function AdminStudio() {
               >
                 ↓ Export PDF
               </button>
-              <Link
-                to="/issue"
+               <Link
+                 to="/issue"
                 className="rounded-md bg-newsprint-ink px-3 py-2 font-sans text-xs text-newsprint-paper"
               >
-                Public issue ↗
+                 প্রকাশিত সংস্করণ ↗
               </Link>
             </div>
           </div>

@@ -40,7 +40,7 @@ export function NewspaperPage({
         </div>
       </header>
 
-      <div className="newsprint-grid mt-4 grid grid-cols-6 gap-x-[1.53%] gap-y-3">
+      <div className="newsprint-grid mt-4 grid grid-cols-6 gap-y-3">
         {page.columns.map((col, ci) => (
           <div
             key={ci}
@@ -63,7 +63,7 @@ export function NewspaperPage({
                 draggable={editable}
                 onDragStart={editable ? () => onDragStartBlock?.(block.id) : undefined}
                 onClick={editable ? () => onSelect?.(block) : undefined}
-                style={{ width: `calc(${Math.min(6 - ci, Math.max(1, block.columnSpan ?? 1)) * 100}% + ${Math.min(6 - ci, Math.max(1, block.columnSpan ?? 1)) - 1} * 1.53vw)`, position: "relative", zIndex: 1, background: "var(--paper)" }}
+                 style={{ width: `calc(${Math.min(6 - ci, Math.max(1, block.columnSpan ?? 1)) * 100}% + ${Math.min(6 - ci, Math.max(1, block.columnSpan ?? 1)) - 1} * var(--column-gap))`, position: "relative", zIndex: 1, background: "var(--paper)" }}
                 className={
                   editable
                     ? `cursor-pointer rounded-sm p-1 transition-colors ${
@@ -82,7 +82,7 @@ export function NewspaperPage({
       </div>
 
       <footer className="mt-4 flex flex-wrap justify-between gap-2 border-t border-newsprint-rule pt-2 font-serif-bn text-[0.6rem] text-newsprint-muted">
-        <span>দিনের শেষ খবর · e-paper edition {edition.number}</span>
+        <span>দিনের শেষ খবর · সংস্করণ {edition.number}</span>
         <span>পৃষ্ঠা {page.no} · {page.title}</span>
       </footer>
     </div>

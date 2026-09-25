@@ -16,7 +16,7 @@ function publicClient() {
 }
 
 export const listPublishedEditions = createServerFn({ method: "GET" })
-  .inputValidator((input) => z.object({ month: z.string().optional(), section: z.string().optional(), query: z.string().optional() }).parse(input ?? {}))
+   .validator((input) => z.object({ month: z.string().optional(), section: z.string().optional(), query: z.string().optional() }).parse(input ?? {}))
   .handler(async ({ data }) => {
     let query = publicClient().from("editions").select("id,edition_number,publication_date,date_bn,hijri_date,published_at,edition_pages(id,page_number,title,section)").eq("status", "published").order("publication_date", { ascending: false });
     if (data.month) query = query.gte("publication_date", `${data.month}-01`).lt("publication_date", `${data.month}-32`);
@@ -31,7 +31,7 @@ export const listPublishedEditions = createServerFn({ method: "GET" })
   });
 
 export const getPublishedEdition = createServerFn({ method: "GET" })
-  .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
+   .validator((input) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data }) => {
     const client = publicClient();
     const { data: edition, error } = await client.from("editions").select("id,edition_number,publication_date,date_bn,hijri_date,status").eq("id", data.id).eq("status", "published").single();
