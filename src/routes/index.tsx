@@ -116,7 +116,7 @@ function PublicSite() {
                 href={`/issue/${edition.id}`}
                 className="rounded-md bg-newsprint-ink px-3 py-2 font-sans text-xs text-newsprint-paper"
               >
-                ⎙ প্রিন্ট
+                 ⎙ প্রিন্টের পাতা
               </a>
             </div>
           </div>
