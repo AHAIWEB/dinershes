@@ -45,10 +45,17 @@ export async function scrapeArticle(sourceUrl: string) {
     ?? document.querySelector("h1")?.textContent?.trim()
     ?? document.title;
   const image = document.querySelector('meta[property="og:image"]')?.getAttribute("content") ?? undefined;
+  let imageUrl: string | undefined;
+  if (image) {
+    try {
+      const candidate = new URL(image, url);
+      if (candidate.protocol === "https:") imageUrl = candidate.toString();
+    } catch { /* Invalid image metadata should not prevent reading the article. */ }
+  }
   return {
     title: title.trim().slice(0, 300),
     text,
-    image: image ? new URL(image, url).toString() : undefined,
+    image: imageUrl,
     url: url.toString(),
     domain: url.hostname.replace(/^www\./, ""),
     fetchedAt: new Date().toISOString(),

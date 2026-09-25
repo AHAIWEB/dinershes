@@ -124,7 +124,7 @@ function AdminStudio() {
       block.section = page.section;
       updatePage((cols) => cols.map((c, i) => (i === columnIndex ? [...c, block] : c)));
       setSelectedId(block.id);
-      notify(`${dragging.type} block যোগ হয়েছে`);
+      notify("অংশ যোগ হয়েছে");
     } else {
       const moved = page.columns.flat().find((b) => b.id === dragging.id);
       if (!moved) return;
@@ -135,7 +135,7 @@ function AdminStudio() {
             : c.filter((b) => b.id !== moved.id),
         ),
       );
-      notify("Block সরানো হয়েছে");
+      notify("অংশ সরানো হয়েছে");
     }
     setDragging(null);
   };
@@ -143,7 +143,7 @@ function AdminStudio() {
   const removeSelected = () => {
     updatePage((cols) => cols.map((c) => c.filter((b) => b.id !== selectedId)));
     setSelectedId(null);
-    notify("Block মুছে ফেলা হয়েছে");
+    notify("অংশ মুছে ফেলা হয়েছে");
   };
 
   const addPage = () => {
@@ -357,14 +357,14 @@ function AdminStudio() {
                     <div className="mt-3 space-y-3 font-sans text-[0.68rem]">
                        {tab === "বিষয়বস্তু" && (
                         <>
-                          <Field label="Headline / label">
+                           <Field label="শিরোনাম">
                             <input
                               value={selected.label}
                               onChange={(e) => patchSelected({ label: e.target.value })}
                               className={inputCls}
                             />
                           </Field>
-                          <Field label="Section · navigation tag">
+                           <Field label="বিভাগ">
                             <select
                               value={selected.section}
                               onChange={(e) => patchSelected({ section: e.target.value })}
@@ -375,7 +375,7 @@ function AdminStudio() {
                               ))}
                             </select>
                           </Field>
-                          <Field label="Summary / caption">
+                           <Field label="সারাংশ / ক্যাপশন">
                             <textarea
                               rows={4}
                               value={selected.body ?? selected.credit ?? ""}
@@ -390,7 +390,7 @@ function AdminStudio() {
                             />
                           </Field>
                           {selected.type === "image" && (
-                            <Field label="Image source (URL)">
+                             <Field label="ছবির ঠিকানা">
                               <input
                                 value={selected.imageSrc ?? ""}
                                 onChange={(e) => patchSelected({ imageSrc: e.target.value })}
@@ -411,7 +411,7 @@ function AdminStudio() {
                           {selected.type === "image" && (
                             <>
                               <div className="grid grid-cols-2 gap-2">
-                                <Field label="Width (px)">
+                                 <Field label="প্রস্থ (পিক্সেল)">
                                   <input
                                     type="number"
                                     value={selected.imageWidth ?? 320}
@@ -421,7 +421,7 @@ function AdminStudio() {
                                     className={inputCls}
                                   />
                                 </Field>
-                                <Field label="Height (px)">
+                                 <Field label="উচ্চতা (পিক্সেল)">
                                   <input
                                     type="number"
                                     value={selected.imageHeight ?? 240}
@@ -432,7 +432,7 @@ function AdminStudio() {
                                   />
                                 </Field>
                               </div>
-                              <Field label="Image style">
+                               <Field label="ছবির ধরন">
                                 <div className="flex rounded border border-newsprint-rule">
                                   {(["cover", "contain", "fill"] as const).map((f) => (
                                     <button
@@ -444,12 +444,12 @@ function AdminStudio() {
                                           : ""
                                       }`}
                                     >
-                                      {f}
+                                       {{ cover: "ভরে", contain: "সম্পূর্ণ", fill: "প্রসারিত" }[f]}
                                     </button>
                                   ))}
                                 </div>
                               </Field>
-                              <Field label={`Corners rounded · ${selected.radius ?? 0}px`}>
+                               <Field label={`কোণ · ${selected.radius ?? 0} পিক্সেল`}>
                                 <input
                                   type="range"
                                   min={0}
@@ -461,7 +461,7 @@ function AdminStudio() {
                               </Field>
                             </>
                           )}
-                          <Field label={`Font scale · ${(selected.fontScale ?? 1).toFixed(2)}×`}>
+                           <Field label={`অক্ষরের মাপ · ${(selected.fontScale ?? 1).toFixed(2)}×`}>
                             <input
                               type="range"
                               min={0.7}
@@ -472,7 +472,7 @@ function AdminStudio() {
                               className="w-full"
                             />
                           </Field>
-                          <Field label="Alignment">
+                           <Field label="লেখার অবস্থান">
                             <div className="flex rounded border border-newsprint-rule">
                               {(["left", "center", "right"] as const).map((a) => (
                                 <button
@@ -482,19 +482,19 @@ function AdminStudio() {
                                     selected.align === a ? "bg-newsprint-ink text-newsprint-paper" : ""
                                   }`}
                                 >
-                                  {a}
+                                   {{ left: "বামে", center: "মাঝে", right: "ডানে" }[a]}
                                 </button>
                               ))}
                             </div>
                           </Field>
-                          <Field label="Margins">
+                           <Field label="বাইরের ফাঁক">
                             <div className="grid grid-cols-4 gap-1">
                               {(["top", "right", "bottom", "left"] as const).map((s) => (
                                 <div key={s}>{spacingField("margin", s)}</div>
                               ))}
                             </div>
                           </Field>
-                          <Field label="Padding">
+                           <Field label="ভেতরের ফাঁক">
                             <div className="grid grid-cols-4 gap-1">
                               {(["top", "right", "bottom", "left"] as const).map((s) => (
                                 <div key={s}>{spacingField("padding", s)}</div>
@@ -508,7 +508,7 @@ function AdminStudio() {
                                 checked={!!selected.invert}
                                 onChange={(e) => patchSelected({ invert: e.target.checked })}
                               />
-                              Dark advertisement style
+                               গাঢ় বিজ্ঞাপন
                             </label>
                           )}
                         </>
@@ -517,9 +517,9 @@ function AdminStudio() {
                        {tab === "সেটিংস" && (
                         <>
                           <p className="font-serif-bn text-newsprint-muted">
-                            Block ID: {selected.id} · type: {selected.type}
+                             অংশ নম্বর: {selected.id} · ধরন: {blockPalette.find((item) => item.type === selected.type)?.name}
                           </p>
-                          <Field label="Page title">
+                           <Field label="পৃষ্ঠার শিরোনাম">
                             <input
                               value={page.title}
                               onChange={(e) =>
@@ -537,7 +537,7 @@ function AdminStudio() {
                             onClick={removeSelected}
                             className="w-full rounded border border-newsprint-accent px-2 py-1.5 text-newsprint-accent"
                           >
-                            Block মুছে ফেলুন
+                             অংশ মুছে ফেলুন
                           </button>
                         </>
                       )}
