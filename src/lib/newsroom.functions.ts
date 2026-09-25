@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { generateNewsDraft, scrapeArticle } from "./newsroom.server";
 
 const assertEditorial = async (supabase: any, userId: string) => {
   const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle();
@@ -27,6 +26,7 @@ export const fetchSourceUrl = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ url: z.string().url() }).parse(input))
   .handler(async ({ data, context }) => {
     await assertEditorial(context.supabase, context.userId);
+    const { scrapeArticle } = await import("./newsroom.server");
     const scraped = await scrapeArticle(data.url);
     const { data: saved, error } = await context.supabase.from("source_items").insert({
       source_url: scraped.url, source_domain: scraped.domain, source_title: scraped.title,
@@ -46,7 +46,8 @@ export const createAiDraft = createServerFn({ method: "POST" })
   }).parse(input))
   .handler(async ({ data, context }) => {
     await assertEditorial(context.supabase, context.userId);
-    const draft = await generateNewsDraft({ ...data, ...(data.sourceUrl ? { sourceUrl: data.sourceUrl } : {}) });
+    const { generateNewsDraft } = await import("./newsroom.server");
+    const draft = await generateNewsDraft({ title: data.title, text: data.text, facts: data.facts, instructions: data.instructions, mode: data.mode, fields: data.fields, ...(data.sourceUrl ? { sourceUrl: data.sourceUrl } : {}) });
     const { data: saved, error } = await context.supabase.from("articles").insert({
       source_id: data.sourceId ?? null, title: draft.title, subtitle: draft.subtitle, summary: draft.summary,
       body: draft.body, key_facts: draft.keyFacts, image_caption: draft.imageCaption,
