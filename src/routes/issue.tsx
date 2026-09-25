@@ -12,6 +12,8 @@ export const Route = createFileRoute("/issue")({
         content: "দিনের শেষ খবর ই-পেপারের চার পৃষ্ঠার সম্পূর্ণ সংস্করণ—পড়ুন, প্রিন্ট করুন বা PDF নিন।",
       },
       { property: "og:title", content: "সম্পূর্ণ সংস্করণ · দিনের শেষ খবর" },
+      { property: "og:type", content: "article" },
+      { name: "twitter:card", content: "summary_large_image" },
       {
         property: "og:description",
         content: "চার পৃষ্ঠার প্রিন্ট-রেডি বাংলা ই-পেপার সংস্করণ।",

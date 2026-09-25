@@ -63,7 +63,7 @@ export function NewspaperPage({
                 draggable={editable}
                 onDragStart={editable ? () => onDragStartBlock?.(block.id) : undefined}
                 onClick={editable ? () => onSelect?.(block) : undefined}
-                style={{ gridColumn: `span ${Math.min(6 - ci, Math.max(1, block.columnSpan ?? 1))} / span ${Math.min(6 - ci, Math.max(1, block.columnSpan ?? 1))}` }}
+                style={{ width: `calc(${Math.min(6 - ci, Math.max(1, block.columnSpan ?? 1)) * 100}% + ${Math.min(6 - ci, Math.max(1, block.columnSpan ?? 1)) - 1} * 1.53vw)`, position: "relative", zIndex: 1, background: "var(--paper)" }}
                 className={
                   editable
                     ? `cursor-pointer rounded-sm p-1 transition-colors ${
