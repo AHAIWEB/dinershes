@@ -1,4 +1,4 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { listPublishedEditions } from "@/lib/editions.functions";
 
 export const Route = createFileRoute("/issue")({
@@ -10,10 +10,5 @@ export const Route = createFileRoute("/issue")({
     { property: "og:type", content: "article" },
     { name: "twitter:card", content: "summary_large_image" },
   ] }),
-  loader: async () => {
-    const editions = await listPublishedEditions({ data: {} });
-    if (editions[0]) throw redirect({ to: "/issue/$editionId", params: { editionId: editions[0].id } });
-    throw redirect({ to: "/archive" });
-  },
-  component: () => null,
+  component: Outlet,
 });
