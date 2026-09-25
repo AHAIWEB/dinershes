@@ -184,10 +184,11 @@
     height: 20.5in !important;
     overflow: hidden;
   }
-  .newspaper-sheet { width: 13in !important; height: 20.5in !important; box-shadow: none !important; }
+  .newspaper-sheet { width: 13in !important; height: 20.5in !important; padding: 0 0.25in !important; box-shadow: none !important; }
+  .newsprint-grid { --column-gap: 0.1in; }
   * { print-color-adjust: exact !important; -webkit-print-color-adjust: exact !important; }
   body { background: var(--paper); }
 }
 
 .newspaper-sheet { width: 100%; aspect-ratio: 13 / 20.5; overflow: hidden; }
-.newsprint-grid { --column-gap: clamp(2px, 1.53vw, 20px); column-gap: var(--column-gap); min-height: 76%; }
+.newsprint-grid { --column-gap: clamp(2px, 1vw, 10px); column-gap: var(--column-gap); min-height: 76%; }

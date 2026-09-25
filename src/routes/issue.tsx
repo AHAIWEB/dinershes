@@ -1,5 +1,4 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { listPublishedEditions } from "@/lib/editions.functions";
 
 export const Route = createFileRoute("/issue")({
   head: () => ({ meta: [
