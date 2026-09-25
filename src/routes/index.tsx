@@ -13,6 +13,8 @@ export const Route = createFileRoute("/")({
           "দিনের শেষ খবর — সারাদিনের টপ খবর নিয়ে চার পৃষ্ঠার প্রিন্ট-রেডি বাংলা ই-পেপার, প্রতিদিন সন্ধ্যায়।",
       },
       { property: "og:title", content: "দিনের শেষ খবর · আজকের ই-পেপার" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       {
         property: "og:description",
         content: "সারাদিনের টপ খবর এক পাতায়—PDF ও প্রিন্ট-রেডি বাংলা ই-পেপার।",
@@ -24,7 +26,8 @@ export const Route = createFileRoute("/")({
 
 function PublicSite() {
   const edition = initialEdition;
-  const front = edition.pages[0]!;
+  const front = edition.pages[0];
+  if (!front) return null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -55,7 +58,8 @@ function PublicSite() {
           </h2>
           <div className="mt-4 grid gap-6 md:grid-cols-3">
             {edition.pages.slice(1).map((p) => {
-              const b = p.columns[0]![0]!;
+              const b = p.columns[0]?.[0];
+              if (!b) return null;
               return (
                 <article key={p.id}>
                   <span className="font-sans text-[0.55rem] uppercase tracking-[0.2em] text-newsprint-accent">
@@ -106,7 +110,7 @@ function PublicSite() {
                 to="/issue"
                 className="block border border-newsprint-rule bg-newsprint-paper p-2 transition-shadow hover:shadow-paper"
               >
-                <div className="aspect-[3/4] overflow-hidden">
+                 <div className="aspect-[13/20.5] overflow-hidden">
                   <div className="origin-top-left scale-[0.34] [width:294%]">
                     <NewspaperPage edition={edition} page={p} />
                   </div>

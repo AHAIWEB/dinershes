@@ -20,6 +20,7 @@ export type Block = {
   margin?: { top: number; right: number; bottom: number; left: number };
   padding?: { top: number; right: number; bottom: number; left: number };
   invert?: boolean;
+  columnSpan?: number;
 };
 
 export type Page = {
@@ -55,7 +56,7 @@ const base = (b: Partial<Block> & { id: string; type: BlockType; label: string }
   ...b,
 });
 
-export const initialEdition: Edition = {
+const threeColumnEdition: Edition = {
   id: "ed-10",
   number: "১০",
   dateBn: "রবিবার, ১০ সেপ্টেম্বর ২০২৪",
@@ -333,6 +334,16 @@ export const initialEdition: Edition = {
   ],
 };
 
+export const initialEdition: Edition = {
+  ...threeColumnEdition,
+  pages: threeColumnEdition.pages.map((page) => ({
+    ...page,
+    columns: page.columns.flatMap((column) => [column.map((block) => ({ ...block, columnSpan: 2 })), []]),
+  })),
+};
+
+export const COLUMN_WIDTHS = [2, 4.213, 6.410, 8.607, 10.803, 13];
+
 export const blockPalette: { type: BlockType; name: string; hint: string }[] = [
   { type: "headline", name: "Headline", hint: "শিরোনাম" },
   { type: "article", name: "Article", hint: "প্রতিবেদন" },
@@ -346,6 +357,7 @@ export const newBlock = (type: BlockType): Block =>
   base({
     id: `n-${Math.random().toString(36).slice(2, 8)}`,
     type,
+    columnSpan: 1,
     label:
       type === "headline"
         ? "নতুন শিরোনাম"

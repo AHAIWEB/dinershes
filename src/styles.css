@@ -170,14 +170,23 @@
 }
 
 @media print {
+  @page { size: 13in 20.5in; margin: 0; }
   .no-print {
     display: none !important;
   }
   .print-page {
     break-after: page;
     box-shadow: none !important;
+    width: 13in !important;
+    height: 20.5in !important;
+    overflow: hidden;
   }
+  .newspaper-sheet { width: 13in !important; height: 20.5in !important; box-shadow: none !important; }
+  * { print-color-adjust: exact !important; -webkit-print-color-adjust: exact !important; }
   body {
     background: #fff;
   }
 }
+
+.newspaper-sheet { width: 100%; aspect-ratio: 13 / 20.5; overflow: hidden; }
+.newsprint-grid { min-height: 76%; }

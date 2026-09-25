@@ -12,8 +12,8 @@ export function TopBar({ mode }: { mode: "public" | "admin" }) {
             <span className="block truncate font-display-bn text-base leading-none text-newsprint-ink">
               দিনের শেষ খবর
             </span>
-            <span className="block font-sans text-[0.55rem] uppercase tracking-[0.25em] text-newsprint-muted">
-              E-Paper Studio
+           <span className="block font-sans text-[0.55rem] text-newsprint-muted">
+               বাংলা ই-পেপার
             </span>
           </span>
         </Link>
@@ -26,7 +26,7 @@ export function TopBar({ mode }: { mode: "public" | "admin" }) {
                 : "text-newsprint-muted hover:text-newsprint-ink"
             }`}
           >
-            Admin panel
+             নিউজরুম
           </Link>
           <Link
             to="/"
@@ -36,9 +36,10 @@ export function TopBar({ mode }: { mode: "public" | "admin" }) {
                 : "text-newsprint-muted hover:text-newsprint-ink"
             }`}
           >
-            Public site
+             আজকের পাতা
           </Link>
-        </nav>
+           <Link to="/archive" className="px-3 py-1.5 font-serif-bn text-xs text-newsprint-muted">আর্কাইভ</Link>
+         </nav>
       </div>
     </div>
   );
