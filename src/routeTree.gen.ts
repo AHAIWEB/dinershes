@@ -12,7 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as ArchiveRouteImport } from './routes/archive'
-import { Route as IssueRouteImport } from './routes/issue'
+import { Route as IssueIndexRouteImport } from './routes/issue.index'
 import { Route as IssueEditionIdRouteImport } from './routes/issue.$editionId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -30,9 +30,9 @@ const ArchiveRoute = ArchiveRouteImport.update({
   path: '/archive',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IssueRoute = IssueRouteImport.update({
-  id: '/issue',
-  path: '/issue',
+const IssueIndexRoute = IssueIndexRouteImport.update({
+  id: '/issue/',
+  path: '/issue/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IssueEditionIdRoute = IssueEditionIdRouteImport.update({
@@ -45,37 +45,37 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/archive': typeof ArchiveRoute
-  '/issue': typeof IssueRouteWithChildren
   '/issue/$editionId': typeof IssueEditionIdRoute
+  '/issue/': typeof IssueIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/archive': typeof ArchiveRoute
-  '/issue': typeof IssueRouteWithChildren
   '/issue/$editionId': typeof IssueEditionIdRoute
+  '/issue': typeof IssueIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/archive': typeof ArchiveRoute
-  '/issue': typeof IssueRouteWithChildren
   '/issue/$editionId': typeof IssueEditionIdRoute
+  '/issue/': typeof IssueIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/archive' | '/issue' | '/issue/$editionId'
+  fullPaths: '/' | '/admin' | '/archive' | '/issue/$editionId' | '/issue/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/archive' | '/issue' | '/issue/$editionId'
-  id: '__root__' | '/' | '/admin' | '/archive' | '/issue' | '/issue/$editionId'
+  to: '/' | '/admin' | '/archive' | '/issue/$editionId' | '/issue'
+  id: '__root__' | '/' | '/admin' | '/archive' | '/issue/$editionId' | '/issue/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   ArchiveRoute: typeof ArchiveRoute
-  IssueRoute: typeof IssueRouteWithChildren
+  IssueIndexRoute: typeof IssueIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -101,11 +101,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ArchiveRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/issue': {
-      id: '/issue'
+    '/issue/': {
+      id: '/issue/'
       path: '/issue'
-      fullPath: '/issue'
-      preLoaderRoute: typeof IssueRouteImport
+      fullPath: '/issue/'
+      preLoaderRoute: typeof IssueIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/issue/$editionId': {
@@ -118,21 +118,11 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface IssueRouteChildren {
-  IssueEditionIdRoute: typeof IssueEditionIdRoute
-}
-
-const IssueRouteChildren: IssueRouteChildren = {
-  IssueEditionIdRoute: IssueEditionIdRoute,
-}
-
-const IssueRouteWithChildren = IssueRoute._addFileChildren(IssueRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   ArchiveRoute: ArchiveRoute,
-  IssueRoute: IssueRouteWithChildren,
+  IssueIndexRoute: IssueIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
