@@ -5,12 +5,12 @@ import { createRunIdFetch } from "./gateway/run-id.ts";
 
 export type NewsroomMode = "full" | "brief" | "custom";
 
-const blockedHosts = /^(localhost|0\.0\.0\.0|127\.|10\.|192\.168\.|169\.254\.|::1$)/i;
+const blockedHosts = /^(localhost|.*\.localhost|.*\.local|.*\.internal|0\.0\.0\.0|127\.|10\.|192\.168\.|169\.254\.|::1$)/i;
 const blockedPrivate172 = /^172\.(1[6-9]|2\d|3[01])\./;
 
 function safeUrl(value: string) {
   const url = new URL(value);
-  if (!/^https?:$/.test(url.protocol) || blockedHosts.test(url.hostname) || blockedPrivate172.test(url.hostname)) {
+  if (!/^https?:$/.test(url.protocol) || blockedHosts.test(url.hostname) || blockedPrivate172.test(url.hostname) || /^\d+(?:\.\d+){3}$/.test(url.hostname) || url.hostname.startsWith("[") || !url.hostname.includes(".")) {
     throw new Error("এই ঠিকানা থেকে খবর সংগ্রহ নিরাপদ নয়।");
   }
   return url;

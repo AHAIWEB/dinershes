@@ -185,7 +185,7 @@
     overflow: hidden;
   }
   .newspaper-sheet { width: 13in !important; height: 20.5in !important; padding: 0 0.25in !important; box-shadow: none !important; }
-  .newsprint-grid { --column-gap: 0.1in; }
+  .newsprint-grid { --column-gap: 0.1in !important; }
   * { print-color-adjust: exact !important; -webkit-print-color-adjust: exact !important; }
   body { background: var(--paper); }
 }
