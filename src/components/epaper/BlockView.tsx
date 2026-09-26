@@ -118,3 +118,21 @@ export function BlockView({ block }: { block: Block }) {
     </article>
   );
 }
+
+/** Split text into n near-equal word chunks so each sits in its own printed column. */
+function splitBody(text: string, n: number): string[] {
+  if (n <= 1) return [text];
+  const words = text.split(/(\s+)/);
+  const total = text.length;
+  const parts: string[] = [];
+  let cur = "";
+  for (const w of words) {
+    cur += w;
+    if (cur.length >= total / n && parts.length < n - 1 && !/^\s+$/.test(w)) {
+      parts.push(cur.trim());
+      cur = "";
+    }
+  }
+  parts.push(cur.trim());
+  return parts.filter(Boolean);
+}
