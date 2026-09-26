@@ -6,10 +6,16 @@ import { NewsroomPanel } from "@/components/epaper/NewsroomPanel";
 import { ShareCardStudio } from "@/components/epaper/ShareCardStudio";
 import { supabase } from "@/integrations/supabase/client";
 import { COLUMN_WIDTHS } from "@/lib/epaper-data";
-import { loadEditorialEdition, saveEditorialEdition } from "@/lib/editor.functions";
+import {
+  listApprovedArticles,
+  loadEditorialEdition,
+  runEditorialWorkflow,
+  saveEditorialEdition,
+} from "@/lib/editor.functions";
 import { TopBar } from "@/components/epaper/TopBar";
 import { NewspaperPage } from "@/components/epaper/NewspaperPage";
 import {
+  autoLayoutColumns,
   blockPalette,
   initialEdition,
   newBlock,
@@ -17,6 +23,7 @@ import {
   type Block,
   type BlockType,
   type Edition,
+  type Page,
 } from "@/lib/epaper-data";
 
 export const Route = createFileRoute("/admin")({
@@ -57,7 +64,8 @@ function AdminStudio() {
   const [loaded, setLoaded] = useState(false);
   const [savedId, setSavedId] = useState<string>();
   const [saving, setSaving] = useState(false);
-  const [scheduledFor, setScheduledFor] = useState("");
+  const runWorkflow = useServerFn(runEditorialWorkflow);
+  const fetchApproved = useServerFn(listApprovedArticles);
   const [pageIndex, setPageIndex] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>("b2");
   const [tab, setTab] = useState<"বিষয়বস্তু" | "বিন্যাস" | "সেটিংস">("বিষয়বস্তু");
@@ -78,7 +86,6 @@ function AdminStudio() {
           return;
         }
         setSavedId(saved.edition.id);
-        setScheduledFor(saved.edition.scheduled_for ?? "");
         setEdition({
           id: saved.edition.id,
           number: saved.edition.edition_number,
@@ -90,6 +97,7 @@ function AdminStudio() {
             no: p.page_number,
             title: p.title,
             section: p.section,
+            status: p.status as Page["status"],
             columns: p.columns as Block[][],
           })),
         });
@@ -113,7 +121,7 @@ function AdminStudio() {
     setTimeout(() => setToast(null), 2200);
   };
 
-  const persist = async (status: Edition["status"]) => {
+  const persist = async (status: "draft" | "review") => {
     if (saving || !loaded) return;
     setSaving(true);
     try {
@@ -124,9 +132,6 @@ function AdminStudio() {
           dateBn: edition.dateBn,
           hijri: edition.hijri,
           status,
-          ...(status === "scheduled" && scheduledFor
-            ? { scheduledFor: new Date(scheduledFor).toISOString() }
-            : {}),
           pages: edition.pages.map((p) => ({
             title: p.title,
             section: p.section,
@@ -135,14 +140,74 @@ function AdminStudio() {
         },
       });
       setSavedId(result.id);
-      setEdition((prev) => ({ ...prev, status }));
-      notify(status === "published" ? "সংস্করণ প্রকাশিত হয়েছে" : "সংস্করণ সংরক্ষিত হয়েছে");
+      setEdition((prev) => ({
+        ...prev,
+        status,
+        pages: prev.pages.map((p) => (p.status === "published" ? p : { ...p, status: "draft" })),
+      }));
+      notify("সংরক্ষিত হয়েছে · অনুমোদন আবার দিতে হবে");
+      return result.id;
     } catch (error) {
       notify(error instanceof Error ? error.message : "সংরক্ষণ করা যায়নি।");
     } finally {
       setSaving(false);
     }
   };
+
+  const workflow = async (scope: "edition" | "page", action: "approve" | "publish") => {
+    if (!savedId) return notify("আগে খসড়া সংরক্ষণ করুন।");
+    setSaving(true);
+    try {
+      await runWorkflow({
+        data: {
+          editionId: savedId,
+          scope,
+          action,
+          ...(scope === "page" ? { pageNumber: page.no } : {}),
+        },
+      });
+      const next = action === "approve" ? "approved" : "published";
+      setEdition((prev) =>
+        scope === "edition"
+          ? {
+              ...prev,
+              status: next,
+              pages:
+                next === "published"
+                  ? prev.pages.map((p) => ({ ...p, status: "published" as const }))
+                  : prev.pages,
+            }
+          : {
+              ...prev,
+              pages: prev.pages.map((p, i) => (i === pageIndex ? { ...p, status: next } : p)),
+            },
+      );
+      notify(
+        action === "approve"
+          ? "অনুমোদিত হয়েছে—এখন প্রকাশ করা যাবে"
+          : scope === "edition"
+            ? "পুরো সংস্করণ প্রকাশিত হয়েছে"
+            : `পৃষ্ঠা ${page.no} প্রকাশিত হয়েছে`,
+      );
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "কাজটি সম্পন্ন হয়নি।");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const autoLayout = async () => {
+    try {
+      let articles = await fetchApproved({ data: { section: page.section } });
+      if (!articles.length) articles = await fetchApproved({ data: {} });
+      if (!articles.length) return notify("অনুমোদিত সংবাদ নেই—আগে AI নিউজরুমে অনুমোদন দিন।");
+      updatePage(() => autoLayoutColumns(articles.slice(0, 7), page.section));
+      notify("পাতা স্বয়ংক্রিয়ভাবে সাজানো হয়েছে—চাইলে টেনে বদলান");
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "স্বয়ংক্রিয় বিন্যাস হয়নি।");
+    }
+  };
+  const pageLocked = page.status === "published" || edition.status === "published";
 
   const updatePage = (fn: (cols: Block[][]) => Block[][]) =>
     setEdition((prev) => ({
@@ -233,40 +298,41 @@ function AdminStudio() {
             {edition.status === "draft"
               ? "খসড়া"
               : edition.status === "review"
-                ? "যাচাই"
-                : edition.status === "scheduled"
-                  ? "নির্ধারিত"
+                ? "যাচাইয়ের অপেক্ষায়"
+                : edition.status === "approved"
+                  ? "সম্পাদক অনুমোদিত"
                   : "প্রকাশিত"}
           </span>
           <span className="font-serif-bn text-xs text-newsprint-muted">{edition.dateBn}</span>
           <div className="ml-auto flex flex-wrap gap-2">
-            {[
-              { l: "↓ খসড়া সংরক্ষণ", s: "draft" as const },
-              { l: "◉ যাচাইয়ের জন্য", s: "review" as const },
-              { l: "◔ সময় নির্ধারণ", s: "scheduled" as const },
-            ].map((b) => (
-              <button
-                key={b.l}
-                onClick={() => persist(b.s)}
-                disabled={saving || !loaded || edition.status === "published"}
-                className="rounded-md border border-newsprint-rule px-3 py-1.5 font-sans text-xs"
-              >
-                {b.l}
-              </button>
-            ))}
-            <input
-              aria-label="প্রকাশের সময়"
-              type="datetime-local"
-              value={scheduledFor ? scheduledFor.slice(0, 16) : ""}
-              onChange={(e) => setScheduledFor(e.target.value)}
-              className="border border-newsprint-rule bg-newsprint-paper px-2 font-serif-bn text-xs"
-            />
             <button
-              onClick={() => persist("published")}
+              onClick={() => persist("draft")}
               disabled={saving || !loaded || edition.status === "published"}
-              className="rounded-md bg-newsprint-accent px-3 py-1.5 font-sans text-xs text-newsprint-paper"
+              className="rounded-md border border-newsprint-rule px-3 py-1.5 font-sans text-xs disabled:opacity-40"
             >
-              ↗ প্রকাশ করুন
+              ↓ খসড়া সংরক্ষণ
+            </button>
+            <button
+              onClick={() => persist("review")}
+              disabled={saving || !loaded || edition.status === "published"}
+              className="rounded-md border border-newsprint-rule px-3 py-1.5 font-sans text-xs disabled:opacity-40"
+            >
+              ◉ যাচাইয়ে পাঠান
+            </button>
+            <button
+              onClick={() => workflow("edition", "approve")}
+              disabled={saving || edition.status !== "review"}
+              className="rounded-md border border-newsprint-accent px-3 py-1.5 font-sans text-xs text-newsprint-accent disabled:opacity-40"
+            >
+              ✓ সংস্করণ অনুমোদন
+            </button>
+            <button
+              onClick={() => workflow("edition", "publish")}
+              disabled={saving || edition.status !== "approved"}
+              title="সম্পাদকের অনুমোদনের পরই প্রকাশ করা যায়"
+              className="rounded-md bg-newsprint-accent px-3 py-1.5 font-sans text-xs text-newsprint-paper disabled:opacity-40"
+            >
+              ↗ পুরো সংস্করণ প্রকাশ
             </button>
           </div>
         </div>
@@ -369,9 +435,52 @@ function AdminStudio() {
                   <span className="font-serif-bn text-sm font-bold">
                     পৃষ্ঠা {page.no} · {page.title}
                   </span>
-                  <span className="font-sans text-[0.65rem] text-newsprint-muted">
-                    অংশ টেনে কলামে রাখুন · সম্পাদনা করতে নির্বাচন করুন
+                  <select
+                    aria-label="পাতার বিভাগ"
+                    value={page.section}
+                    disabled={pageLocked}
+                    onChange={(e) =>
+                      setEdition((prev) => ({
+                        ...prev,
+                        pages: prev.pages.map((p, i) =>
+                          i === pageIndex ? { ...p, section: e.target.value, title: e.target.value } : p,
+                        ),
+                      }))
+                    }
+                    className="border border-newsprint-rule bg-newsprint-paper px-2 py-1 font-serif-bn text-xs"
+                  >
+                    {SECTIONS.map((s) => (
+                      <option key={s}>{s}</option>
+                    ))}
+                  </select>
+                  <span className="rounded-full bg-newsprint-paper px-2 py-0.5 font-sans text-[0.65rem] text-newsprint-accent">
+                    {page.status === "published"
+                      ? "পাতা প্রকাশিত"
+                      : page.status === "approved"
+                        ? "পাতা অনুমোদিত"
+                        : "পাতা খসড়া"}
                   </span>
+                  <button
+                    onClick={autoLayout}
+                    disabled={pageLocked}
+                    className="rounded border border-newsprint-ink px-2 py-1 font-sans text-xs disabled:opacity-40"
+                  >
+                    ⚡ স্বয়ংক্রিয় বিন্যাস
+                  </button>
+                  <button
+                    onClick={() => workflow("page", "approve")}
+                    disabled={saving || pageLocked || page.status === "approved"}
+                    className="rounded border border-newsprint-accent px-2 py-1 font-sans text-xs text-newsprint-accent disabled:opacity-40"
+                  >
+                    ✓ পাতা অনুমোদন
+                  </button>
+                  <button
+                    onClick={() => workflow("page", "publish")}
+                    disabled={saving || page.status !== "approved"}
+                    className="rounded bg-newsprint-accent px-2 py-1 font-sans text-xs text-newsprint-paper disabled:opacity-40"
+                  >
+                    ↗ শুধু এই পাতা প্রকাশ
+                  </button>
                   <div className="ml-auto flex items-center gap-2 font-sans text-xs">
                     <button onClick={() => setZoom((z) => Math.max(40, z - 8))}>−</button>
                     <span>{zoom}%</span>
