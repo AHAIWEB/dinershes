@@ -266,8 +266,8 @@ function AdminStudio() {
     const cols: Block[][] = replace ? Array.from({ length: 6 }, () => []) : target.columns.map((c) => [...c]);
     items.forEach((it, idx) => {
       const lead = idx === 0;
-      const ci = lead ? 0 : lead ? 0 : (idx - 1) % 6;
-      const col = lead ? 0 : ci;
+      const ci = (idx - 1) % 6;
+      const col = ci;
       const headline = newBlock("headline");
       headline.label = it.title;
       headline.section = section;
