@@ -37,7 +37,8 @@ export function NewspaperPage({
           <div className="font-serif-bn text-[0.68rem] text-newsprint-muted sm:text-right">
             <p>{edition.dateBn}</p>
             <p>{edition.hijri}</p>
-            <p className="font-display-bn text-xl text-newsprint-ink">{edition.number}</p>
+            <p className="font-display-bn text-xl text-newsprint-ink">সংখ্যা {edition.number}</p>
+            <p className="font-serif-bn text-newsprint-accent">পৃষ্ঠা {page.no} · {page.title}</p>
           </div>
         </div>
       </header>
