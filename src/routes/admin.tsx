@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { AuthGate } from "@/components/epaper/AuthGate";
 import { NewsroomPanel } from "@/components/epaper/NewsroomPanel";
+import { FeedPanel } from "@/components/epaper/FeedPanel";
+import { DashboardPanel } from "@/components/epaper/DashboardPanel";
 import { ShareCardStudio } from "@/components/epaper/ShareCardStudio";
 import { supabase } from "@/integrations/supabase/client";
 import { COLUMN_WIDTHS } from "@/lib/epaper-data";
@@ -52,6 +54,7 @@ export const Route = createFileRoute("/admin")({
 });
 
 const NAV = [
+  { label: "ড্যাশবোর্ড", icon: "◧" },
   { label: "পৃষ্ঠা ডিজাইন", icon: "▦" },
   { label: "AI নিউজরুম", icon: "≡" },
   { label: "শেয়ার কার্ড", icon: "▤" },
@@ -75,6 +78,7 @@ function AdminStudio() {
     { kind: "new"; type: BlockType } | { kind: "move"; id: string } | null
   >(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [pick, setPick] = useState<{ url: string; section: string }>();
 
   useEffect(() => {
     let mounted = true;
@@ -368,8 +372,27 @@ function AdminStudio() {
         </aside>
 
         <main className="min-w-0 flex-1 px-4 py-5">
-          {nav === "AI নিউজরুম" ? (
+          {nav === "ড্যাশবোর্ড" ? (
+            <DashboardPanel
+              onUseAd={(ad) => {
+                const block = newBlock("ad");
+                block.label = ad.title;
+                block.body = ad.body;
+                block.imageSrc = ad.image_url ?? "";
+                block.columnSpan = ad.column_span;
+                block.section = "বিজ্ঞাপন";
+                block.invert = true;
+                updatePage((cols) => cols.map((col, i) => (i === 0 ? [...col, block] : col)));
+                setSelectedId(block.id);
+                setNav("পৃষ্ঠা ডিজাইন");
+                notify("বিজ্ঞাপন পাতায় বসেছে");
+              }}
+            />
+          ) : nav === "AI নিউজরুম" ? (
+            <>
+            <FeedPanel onPick={(url, section) => setPick({ url, section })} />
             <NewsroomPanel
+              {...(pick ? { initialUrl: pick.url, initialSection: pick.section } : {})}
               onPlace={(draft) => {
                 const block = newBlock("article");
                 block.label = draft.title;
@@ -384,6 +407,7 @@ function AdminStudio() {
                 notify("অনুমোদিত সংবাদ পাতায় বসেছে");
               }}
             />
+            </>
           ) : nav === "শেয়ার কার্ড" ? (
             <ShareCardStudio
               headline={

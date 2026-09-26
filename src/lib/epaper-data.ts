@@ -104,7 +104,7 @@ export function autoLayoutColumns(articles: LayoutArticle[], section: string): B
       section: article.section || section,
       label: article.title,
       credit: article.subtitle,
-      body: article.summary || article.body.slice(0, 420),
+      body: [article.summary, article.body].filter(Boolean).join("\n").slice(0, inRail ? 700 : 1100),
       columnSpan: inRail ? 2 : 4,
     };
     (inRail ? cols[4]! : cols[0]!).push({ ...block });
@@ -118,6 +118,15 @@ export function autoLayoutColumns(articles: LayoutArticle[], section: string): B
     body: "বিজ্ঞাপনের জন্য যোগাযোগ করুন · দিনের শেষ খবর",
     columnSpan: 2,
     invert: true,
+  });
+  // Full-width advertisement band closes the sheet so the lower half never stays blank.
+  cols[0]!.push({
+    id: uid(),
+    type: "ad",
+    section: "বিজ্ঞাপন",
+    label: "পূর্ণ প্রস্থ বিজ্ঞাপন · ৬ কলাম (১৩ ইঞ্চি)",
+    body: "বিজ্ঞাপনের জন্য যোগাযোগ করুন · দিনের শেষ খবর",
+    columnSpan: 6,
   });
   return cols;
 }
