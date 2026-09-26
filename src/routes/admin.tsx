@@ -399,8 +399,17 @@ function AdminStudio() {
                 block.body = `${draft.subtitle}\n${draft.summary}\n${draft.body}`;
                 block.section = draft.section;
                 block.columnSpan = 2;
+                const extra = [];
+                if (draft.image) {
+                  const img = newBlock("image");
+                  img.imageSrc = draft.image;
+                  img.label = draft.imageCaption || draft.title;
+                  img.section = draft.section;
+                  img.columnSpan = 2;
+                  extra.push(img);
+                }
                 updatePage((cols) =>
-                  cols.map((col, index) => (index === 0 ? [...col, block] : col)),
+                  cols.map((col, index) => (index === 0 ? [...col, ...extra, block] : col)),
                 );
                 setSelectedId(block.id);
                 setNav("পৃষ্ঠা ডিজাইন");
