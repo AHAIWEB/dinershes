@@ -1,8 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { Database } from "@/integrations/supabase/types";
 
-const assertEditorial = async (supabase: any, userId: string) => {
+const assertEditorial = async (supabase: SupabaseClient<Database>, userId: string) => {
   const { data } = await supabase
     .from("user_roles")
     .select("role")
