@@ -338,11 +338,14 @@ export const initialEdition: Edition = {
   ...threeColumnEdition,
   pages: threeColumnEdition.pages.map((page) => ({
     ...page,
-    columns: page.columns.flatMap((column) => [column.map((block) => ({ ...block, columnSpan: 2 })), []]),
+    columns: page.columns.flatMap((column) => [
+      column.map((block) => ({ ...block, columnSpan: 2 })),
+      [],
+    ]),
   })),
 };
 
-export const COLUMN_WIDTHS = [2, 4.213, 6.410, 8.607, 10.803, 13];
+export const COLUMN_WIDTHS = [2, 4.213, 6.41, 8.607, 10.803, 13];
 
 export const blockPalette: { type: BlockType; name: string; hint: string }[] = [
   { type: "headline", name: "শিরোনাম", hint: "বড় খবর" },

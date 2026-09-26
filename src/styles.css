@@ -170,9 +170,19 @@
 }
 
 @media print {
-  @page { size: 13in 20.5in; margin: 0; }
-  body, main { margin: 0 !important; padding: 0 !important; max-width: none !important; }
-  .print-page + .print-page { margin-top: 0 !important; }
+  @page {
+    size: 13in 20.5in;
+    margin: 0;
+  }
+  body,
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+  }
+  .print-page + .print-page {
+    margin-top: 0 !important;
+  }
   .no-print {
     display: none !important;
   }
@@ -184,11 +194,31 @@
     height: 20.5in !important;
     overflow: hidden;
   }
-  .newspaper-sheet { width: 13in !important; height: 20.5in !important; padding: 0 0.25in !important; box-shadow: none !important; }
-  .newsprint-grid { --column-gap: 0.1in !important; }
-  * { print-color-adjust: exact !important; -webkit-print-color-adjust: exact !important; }
-  body { background: var(--paper); }
+  .newspaper-sheet {
+    width: 13in !important;
+    height: 20.5in !important;
+    padding: 0 0.25in !important;
+    box-shadow: none !important;
+  }
+  .newsprint-grid {
+    --column-gap: 0.1in !important;
+  }
+  * {
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+  body {
+    background: var(--paper);
+  }
 }
 
-.newspaper-sheet { width: 100%; aspect-ratio: 13 / 20.5; overflow: hidden; }
-.newsprint-grid { --column-gap: clamp(2px, 1vw, 10px); column-gap: var(--column-gap); min-height: 76%; }
+.newspaper-sheet {
+  width: 100%;
+  aspect-ratio: 13 / 20.5;
+  overflow: hidden;
+}
+.newsprint-grid {
+  --column-gap: clamp(2px, 1vw, 10px);
+  column-gap: var(--column-gap);
+  min-height: 76%;
+}

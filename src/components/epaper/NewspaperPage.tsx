@@ -63,7 +63,12 @@ export function NewspaperPage({
                 draggable={editable}
                 onDragStart={editable ? () => onDragStartBlock?.(block.id) : undefined}
                 onClick={editable ? () => onSelect?.(block) : undefined}
-                 style={{ width: `calc(${Math.min(6 - ci, Math.max(1, block.columnSpan ?? 1)) * 100}% + ${Math.min(6 - ci, Math.max(1, block.columnSpan ?? 1)) - 1} * var(--column-gap))`, position: "relative", zIndex: 1, background: "var(--paper)" }}
+                style={{
+                  width: `calc(${Math.min(6 - ci, Math.max(1, block.columnSpan ?? 1)) * 100}% + ${Math.min(6 - ci, Math.max(1, block.columnSpan ?? 1)) - 1} * var(--column-gap))`,
+                  position: "relative",
+                  zIndex: 1,
+                  background: "var(--paper)",
+                }}
                 className={
                   editable
                     ? `cursor-pointer rounded-sm p-1 transition-colors ${
@@ -83,7 +88,9 @@ export function NewspaperPage({
 
       <footer className="mt-4 flex flex-wrap justify-between gap-2 border-t border-newsprint-rule pt-2 font-serif-bn text-[0.6rem] text-newsprint-muted">
         <span>দিনের শেষ খবর · সংস্করণ {edition.number}</span>
-        <span>পৃষ্ঠা {page.no} · {page.title}</span>
+        <span>
+          পৃষ্ঠা {page.no} · {page.title}
+        </span>
       </footer>
     </div>
   );
