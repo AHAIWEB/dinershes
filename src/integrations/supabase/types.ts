@@ -172,6 +172,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           date_bn: string
+          design: Json
           edition_number: string
           hijri_date: string
           id: string
@@ -187,6 +188,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           date_bn: string
+          design?: Json
           edition_number: string
           hijri_date?: string
           id?: string
@@ -202,6 +204,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           date_bn?: string
+          design?: Json
           edition_number?: string
           hijri_date?: string
           id?: string
@@ -287,6 +290,7 @@ export type Database = {
           active: boolean
           created_at: string
           id: string
+          kind: string
           last_checked_at: string | null
           last_status: string
           name: string
@@ -298,6 +302,7 @@ export type Database = {
           active?: boolean
           created_at?: string
           id?: string
+          kind?: string
           last_checked_at?: string | null
           last_status?: string
           name?: string
@@ -309,6 +314,7 @@ export type Database = {
           active?: boolean
           created_at?: string
           id?: string
+          kind?: string
           last_checked_at?: string | null
           last_status?: string
           name?: string
@@ -317,6 +323,53 @@ export type Database = {
           url?: string
         }
         Relationships: []
+      }
+      saved_stories: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          feed_id: string | null
+          id: string
+          image_url: string | null
+          link: string
+          summary: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          feed_id?: string | null
+          id?: string
+          image_url?: string | null
+          link: string
+          summary?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          feed_id?: string | null
+          id?: string
+          image_url?: string | null
+          link?: string
+          summary?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_stories_feed_id_fkey"
+            columns: ["feed_id"]
+            isOneToOne: false
+            referencedRelation: "rss_feeds"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       share_cards: {
         Row: {

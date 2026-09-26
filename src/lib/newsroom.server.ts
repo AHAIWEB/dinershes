@@ -47,13 +47,50 @@ export async function scrapeArticle(sourceUrl: string) {
     throw new Error("এই URL-এ পাঠযোগ্য সংবাদ পৃষ্ঠা পাওয়া যায়নি।");
   const html = (await response.text()).slice(0, 2_000_000);
   const { document } = parseHTML(html);
+  // Structured data often carries the full article body even on script-rendered sites.
+  let ldBody = "";
+  document.querySelectorAll('script[type="application/ld+json"]').forEach((node) => {
+    try {
+      const walk = (v: unknown): void => {
+        if (!v || typeof v !== "object") return;
+        if (Array.isArray(v)) return v.forEach(walk);
+        const o = v as Record<string, unknown>;
+        if (typeof o.articleBody === "string" && o.articleBody.length > ldBody.length) ldBody = o.articleBody;
+        Object.values(o).forEach(walk);
+      };
+      walk(JSON.parse(node.textContent ?? ""));
+    } catch {
+      /* ignore malformed JSON-LD */
+    }
+  });
   document
-    .querySelectorAll("script,style,noscript,nav,footer,aside,form")
+    .querySelectorAll("script,style,noscript,nav,footer,aside,form,header,iframe")
     .forEach((node) => node.remove());
-  const article =
-    document.querySelector("article") ?? document.querySelector("main") ?? document.body;
-  const text = (article?.textContent ?? "").replace(/\s+/g, " ").trim().slice(0, 18_000);
-  if (text.length < 120) throw new Error("পাতা থেকে পর্যাপ্ত সংবাদ লেখা পাওয়া যায়নি।");
+  // Pick the container whose paragraphs hold the most text.
+  let best = "";
+  const candidates = [
+    ...document.querySelectorAll("article, main, [itemprop=articleBody], .content, .details, .news-details, .post-content, .entry-content, div"),
+  ].slice(0, 3000);
+  for (const el of candidates) {
+    const paras = [...el.querySelectorAll(":scope > p, :scope > div > p")]
+      .map((p) => (p.textContent ?? "").trim())
+      .filter((t) => t.length > 30);
+    const joined = paras.join("\n\n");
+    if (joined.length > best.length) best = joined;
+  }
+  const description =
+    document.querySelector('meta[property="og:description"]')?.getAttribute("content") ??
+    document.querySelector('meta[name="description"]')?.getAttribute("content") ??
+    "";
+  let text = [ldBody, best].sort((a, b) => b.length - a.length)[0] ?? "";
+  if (text.length < 120) {
+    const fallback = (document.querySelector("article") ?? document.querySelector("main") ?? document.body)?.textContent ?? "";
+    text = fallback.length > text.length ? fallback : text;
+  }
+  text = text.replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim();
+  if (text.length < 120 && description.length > 40) text = description.trim();
+  text = text.slice(0, 18_000);
+  if (text.length < 40) throw new Error("পাতা থেকে পর্যাপ্ত সংবাদ লেখা পাওয়া যায়নি। খবরের নির্দিষ্ট পাতার লিংক দিন (বিভাগের পাতা নয়)।");
   const title =
     document.querySelector('meta[property="og:title"]')?.getAttribute("content") ??
     document.querySelector("h1")?.textContent?.trim() ??

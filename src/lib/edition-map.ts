@@ -1,7 +1,7 @@
-import type { Block, Edition } from "@/lib/epaper-data";
+import { toDesign, type Block, type Edition } from "@/lib/epaper-data";
 
 type Row = {
-  edition: { id: string; edition_number: string; date_bn: string; hijri_date: string };
+  edition: { id: string; edition_number: string; date_bn: string; hijri_date: string; design?: unknown };
   pages: { id: string; page_number: number; title: string; section: string }[];
   blocks: {
     id: string;
@@ -26,6 +26,7 @@ export function toEdition(data: Row): Edition {
     dateBn: data.edition.date_bn,
     hijri: data.edition.hijri_date,
     status: "published",
+    design: toDesign(data.edition.design),
     pages: data.pages.map((page) => ({
       id: page.id,
       no: page.page_number,

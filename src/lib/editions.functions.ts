@@ -64,7 +64,7 @@ export const getPublishedEdition = createServerFn({ method: "GET" })
     const client = publicClient();
     const { data: edition, error } = await client
       .from("editions")
-      .select("id,edition_number,publication_date,date_bn,hijri_date,status")
+      .select("id,edition_number,publication_date,date_bn,hijri_date,status,design")
       .eq("id", data.id)
       .single();
     if (error) throw new Error("প্রকাশিত সংস্করণটি পাওয়া যায়নি।");

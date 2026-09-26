@@ -54,7 +54,7 @@ export const loadEditorialEdition = createServerFn({ method: "GET" })
     if (!role) throw new Error("সম্পাদনার অনুমতি নেই।");
     const { data: edition, error } = await context.supabase
       .from("editions")
-      .select("id,edition_number,date_bn,hijri_date,status,approved_at")
+      .select("id,edition_number,date_bn,hijri_date,status,approved_at,design")
       .neq("status", "published")
       .order("created_at", { ascending: false })
       .limit(1)

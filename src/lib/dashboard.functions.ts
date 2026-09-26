@@ -144,7 +144,7 @@ export const listFeeds = createServerFn({ method: "GET" })
     await rolesOf(context.supabase, context.userId);
     const { data } = await context.supabase
       .from("rss_feeds")
-      .select("id,url,name,region,active,last_status")
+      .select("id,url,name,region,active,last_status,kind")
       .order("region")
       .order("name");
     return data ?? [];
@@ -181,11 +181,154 @@ export const readFeed = createServerFn({ method: "POST" })
 export const addFeed = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((i) =>
-    z.object({ url: z.string().url(), name: z.string().max(100), region: z.string().max(40) }).parse(i),
+    z.object({ url: z.string().url(), name: z.string().max(100), region: z.string().max(40), kind: z.enum(["feed", "site"]).optional() }).parse(i),
   )
   .handler(async ({ data, context }) => {
     await rolesOf(context.supabase, context.userId);
     const { error } = await context.supabase.from("rss_feeds").insert(data);
     if (error) throw new Error("ফিড যোগ করা যায়নি (আগেই থাকতে পারে)।");
+    return { ok: true };
+  });
+
+export const updateFeed = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((i) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        name: z.string().max(100).optional(),
+        region: z.string().max(40).optional(),
+        active: z.boolean().optional(),
+      })
+      .parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    await rolesOf(context.supabase, context.userId);
+    const { id, ...rest } = data;
+    const { error } = await context.supabase.from("rss_feeds").update(rest).eq("id", id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const deleteFeed = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((i) => z.object({ id: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    await rolesOf(context.supabase, context.userId);
+    const { error } = await context.supabase.from("rss_feeds").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/** Reads every active feed in a category and returns items whose title or summary match the query. */
+export const searchFeeds = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((i) => z.object({ region: z.string().max(40), query: z.string().max(100) }).parse(i))
+  .handler(async ({ data, context }) => {
+    await rolesOf(context.supabase, context.userId);
+    const { data: feeds } = await context.supabase
+      .from("rss_feeds")
+      .select("id,url,name")
+      .eq("region", data.region)
+      .eq("active", true)
+      .eq("kind", "feed");
+    const { fetchFeed } = await import("./newsroom.server");
+    const needle = data.query.trim().toLocaleLowerCase("bn");
+    const results = await Promise.all(
+      (feeds ?? []).map(async (f) => {
+        try {
+          const items = await fetchFeed(f.url);
+          await context.supabase.from("rss_feeds").update({ last_status: "ok", last_checked_at: new Date().toISOString() }).eq("id", f.id);
+          return items.map((it) => ({ ...it, feedId: f.id, feedName: f.name }));
+        } catch {
+          await context.supabase.from("rss_feeds").update({ last_status: "error", last_checked_at: new Date().toISOString() }).eq("id", f.id);
+          return [];
+        }
+      }),
+    );
+    return results
+      .flat()
+      .filter((it) => !needle || `${it.title} ${it.summary}`.toLocaleLowerCase("bn").includes(needle))
+      .slice(0, 150);
+  });
+
+export const listSaved = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await rolesOf(context.supabase, context.userId);
+    const { data } = await context.supabase
+      .from("saved_stories")
+      .select("id,title,link,summary,image_url,category,created_at")
+      .order("created_at", { ascending: false })
+      .limit(300);
+    return data ?? [];
+  });
+
+export const saveStory = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((i) =>
+    z
+      .object({
+        title: z.string().min(1).max(300),
+        link: z.string().url(),
+        summary: z.string().max(1000),
+        image: z.string().url().optional(),
+        category: z.string().max(40),
+        feedId: z.string().uuid().optional(),
+      })
+      .parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    await rolesOf(context.supabase, context.userId);
+    const { error } = await context.supabase.from("saved_stories").upsert(
+      {
+        title: data.title,
+        link: data.link,
+        summary: data.summary,
+        image_url: data.image ?? null,
+        category: data.category,
+        feed_id: data.feedId ?? null,
+        created_by: context.userId,
+      },
+      { onConflict: "link" },
+    );
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const deleteSaved = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((i) => z.object({ id: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    await rolesOf(context.supabase, context.userId);
+    const { error } = await context.supabase.from("saved_stories").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+const designSchema = z.object({
+  preset: z.string().max(30),
+  headline: z.number().min(0.8).max(2.4),
+  title: z.number().min(0.7).max(1.6),
+  subtitle: z.number().min(0.5).max(1),
+  body: z.number().min(0.6).max(1),
+  lineHeight: z.number().min(1.2).max(1.9),
+  imageRatio: z.enum(["auto", "16/9", "4/3", "3/2", "1/1"]),
+  kicker: z.enum(["accent", "ink", "hidden"]),
+  rules: z.boolean(),
+  headlineFont: z.enum(["serif", "display"]),
+});
+
+/** Saves one house design for a whole unpublished edition so all four pages look alike. */
+export const saveEditionDesign = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((i) => z.object({ id: z.string().uuid(), design: designSchema }).parse(i))
+  .handler(async ({ data, context }) => {
+    await rolesOf(context.supabase, context.userId);
+    const { data: ed } = await context.supabase.from("editions").select("status").eq("id", data.id).single();
+    if (!ed) throw new Error("সংস্করণ পাওয়া যায়নি।");
+    if (ed.status === "published") throw new Error("প্রকাশিত সংস্করণের ডিজাইন বদলানো যাবে না।");
+    const { error } = await context.supabase.from("editions").update({ design: data.design }).eq("id", data.id);
+    if (error) throw new Error(error.message);
     return { ok: true };
   });
