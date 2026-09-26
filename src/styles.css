@@ -216,6 +216,19 @@
   width: 100%;
   aspect-ratio: 13 / 20.5;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.newspaper-sheet > header,
+.newspaper-sheet > footer {
+  flex-shrink: 0;
+}
+/* Columns run to the bottom rule; overflow is clipped so the footer always stays on the sheet. */
+.newspaper-sheet > .newsprint-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  align-content: start;
 }
 .newsprint-grid {
   --column-gap: clamp(2px, 1vw, 10px);
@@ -225,7 +238,8 @@
 
 .print-sheet-fixed .newspaper-sheet {
   width: 100%;
-  min-height: 100%;
+  height: 100%;
+  aspect-ratio: auto;
   padding: 0.25in;
   box-shadow: none;
   --column-gap: 0.1in;
