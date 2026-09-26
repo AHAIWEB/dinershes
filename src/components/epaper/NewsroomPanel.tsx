@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Check, Globe2, LoaderCircle, WandSparkles } from "lucide-react";
+import { Check, Globe2, ImagePlus, LoaderCircle, WandSparkles } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { approveArticle, createAiDraft, fetchSourceUrl } from "@/lib/newsroom.functions";
 import { SECTIONS } from "@/lib/epaper-data";
 
@@ -21,7 +22,7 @@ export function NewsroomPanel({
   initialUrl,
   initialSection,
 }: {
-  onPlace: (draft: Draft & { section: string }) => void;
+  onPlace: (draft: Draft & { section: string; image?: string }) => void;
   initialUrl?: string;
   initialSection?: string;
 }) {
@@ -100,10 +101,37 @@ export function NewsroomPanel({
           section,
         },
       });
-      onPlace({ ...draft, section });
+      onPlace({ ...draft, section, ...(image ? { image } : {}) });
       setMessage("অনুমোদিত সংবাদটি বর্তমান পাতায় যোগ হয়েছে।");
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "অনুমোদন সম্পন্ন হয়নি।");
+    } finally {
+      setBusy(false);
+    }
+  };
+  const uploadImage = async (file: File) => {
+    if (file.size > 10 * 1024 * 1024) return setMessage("ছবি ১০ MB-এর কম হতে হবে।");
+    setBusy(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage
+        .from("newsroom-images")
+        .upload(path, file, { contentType: file.type });
+      if (error) throw error;
+      const { data, error: signError } = await supabase.storage
+        .from("newsroom-images")
+        .createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+      if (signError || !data) throw signError ?? new Error("ছবির লিংক তৈরি হয়নি।");
+      setImage(data.signedUrl);
+      if (sourceId)
+        await supabase
+          .from("source_items")
+          .update({ lead_image_url: data.signedUrl })
+          .eq("id", sourceId);
+      setMessage("আপনার ছবি আপলোড হয়েছে—পাতায় এই ছবিই বসবে।");
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : "ছবি আপলোড হয়নি।");
     } finally {
       setBusy(false);
     }
@@ -263,10 +291,24 @@ export function NewsroomPanel({
               {image && (
                 <img
                   src={image}
-                  alt="উৎসের প্রধান ছবি"
+                  alt="প্রধান ছবি"
                   className="aspect-[16/7] w-full object-cover"
                 />
               )}
+              <label className="flex cursor-pointer items-center justify-center gap-2 border border-dashed border-newsprint-rule px-3 py-2 font-serif-bn text-sm">
+                <ImagePlus size={16} />
+                {busy ? "আপলোড হচ্ছে…" : image ? "নিজের ছবি দিয়ে বদলান" : "নিজের ছবি আপলোড করুন"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) void uploadImage(file);
+                    e.target.value = "";
+                  }}
+                />
+              </label>
               <label>
                 <span className={label}>শিরোনাম</span>
                 <textarea

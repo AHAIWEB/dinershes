@@ -14,6 +14,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as ArchiveRouteImport } from './routes/archive'
 import { Route as DownloadsRouteImport } from './routes/downloads'
 import { Route as IssueRouteImport } from './routes/issue'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as IssueEditionIdRouteImport } from './routes/issue.$editionId'
 import { Route as IssueIndexRouteImport } from './routes/issue_.index'
 import { Route as PrintEditionIdRouteImport } from './routes/print.$editionId'
@@ -43,6 +44,11 @@ const IssueRoute = IssueRouteImport.update({
   path: '/issue',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IssueEditionIdRoute = IssueEditionIdRouteImport.update({
   id: '/$editionId',
   path: '/$editionId',
@@ -65,6 +71,7 @@ export interface FileRoutesByFullPath {
   '/archive': typeof ArchiveRoute
   '/downloads': typeof DownloadsRoute
   '/issue': typeof IssueRouteWithChildren
+  '/reset-password': typeof ResetPasswordRoute
   '/issue/$editionId': typeof IssueEditionIdRoute
   '/print/$editionId': typeof PrintEditionIdRoute
   '/issue/': typeof IssueIndexRoute
@@ -75,6 +82,7 @@ export interface FileRoutesByTo {
   '/archive': typeof ArchiveRoute
   '/downloads': typeof DownloadsRoute
   '/issue': typeof IssueIndexRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/issue/$editionId': typeof IssueEditionIdRoute
   '/print/$editionId': typeof PrintEditionIdRoute
 }
@@ -85,6 +93,7 @@ export interface FileRoutesById {
   '/archive': typeof ArchiveRoute
   '/downloads': typeof DownloadsRoute
   '/issue': typeof IssueRouteWithChildren
+  '/reset-password': typeof ResetPasswordRoute
   '/issue/$editionId': typeof IssueEditionIdRoute
   '/print/$editionId': typeof PrintEditionIdRoute
   '/issue_/': typeof IssueIndexRoute
@@ -97,6 +106,7 @@ export interface FileRouteTypes {
     | '/archive'
     | '/downloads'
     | '/issue'
+    | '/reset-password'
     | '/issue/$editionId'
     | '/print/$editionId'
     | '/issue/'
@@ -107,6 +117,7 @@ export interface FileRouteTypes {
     | '/archive'
     | '/downloads'
     | '/issue'
+    | '/reset-password'
     | '/issue/$editionId'
     | '/print/$editionId'
   id:
@@ -116,6 +127,7 @@ export interface FileRouteTypes {
     | '/archive'
     | '/downloads'
     | '/issue'
+    | '/reset-password'
     | '/issue/$editionId'
     | '/print/$editionId'
     | '/issue_/'
@@ -127,6 +139,7 @@ export interface RootRouteChildren {
   ArchiveRoute: typeof ArchiveRoute
   DownloadsRoute: typeof DownloadsRoute
   IssueRoute: typeof IssueRouteWithChildren
+  ResetPasswordRoute: typeof ResetPasswordRoute
   PrintEditionIdRoute: typeof PrintEditionIdRoute
   IssueIndexRoute: typeof IssueIndexRoute
 }
@@ -166,6 +179,13 @@ declare module '@tanstack/react-router' {
       path: '/issue'
       fullPath: '/issue'
       preLoaderRoute: typeof IssueRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/issue/$editionId': {
@@ -208,6 +228,7 @@ const rootRouteChildren: RootRouteChildren = {
   ArchiveRoute: ArchiveRoute,
   DownloadsRoute: DownloadsRoute,
   IssueRoute: IssueRouteWithChildren,
+  ResetPasswordRoute: ResetPasswordRoute,
   PrintEditionIdRoute: PrintEditionIdRoute,
   IssueIndexRoute: IssueIndexRoute,
 }
