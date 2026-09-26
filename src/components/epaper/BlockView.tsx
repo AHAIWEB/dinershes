@@ -98,7 +98,14 @@ export function BlockView({ block }: { block: Block }) {
         <p className="mt-1 font-serif-bn text-[0.6rem] text-newsprint-muted">{block.credit}</p>
       )}
       {block.body && (
-        <p className="mt-1 font-serif-bn text-[0.78rem] leading-[1.5] text-newsprint-body">
+        <p
+          className="mt-1 whitespace-pre-line font-serif-bn text-[0.78rem] leading-[1.5] text-newsprint-body"
+          style={
+            (block.columnSpan ?? 1) > 1
+              ? { columnCount: block.columnSpan, columnGap: "var(--column-gap)", columnRule: "1px solid var(--rule)" }
+              : undefined
+          }
+        >
           {block.body}
         </p>
       )}
