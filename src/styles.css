@@ -222,3 +222,11 @@
   column-gap: var(--column-gap);
   min-height: 76%;
 }
+
+.print-sheet-fixed .newspaper-sheet {
+  width: 100%;
+  min-height: 100%;
+  padding: 0.25in;
+  box-shadow: none;
+  --column-gap: 0.1in;
+}

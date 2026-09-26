@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      ads: {
+        Row: {
+          active: boolean
+          body: string
+          column_span: number
+          created_at: string
+          created_by: string | null
+          id: string
+          image_url: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          body?: string
+          column_span?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          body?: string
+          column_span?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       articles: {
         Row: {
           approved_at: string | null
@@ -245,6 +281,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      rss_feeds: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          last_checked_at: string | null
+          last_status: string
+          name: string
+          region: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          last_checked_at?: string | null
+          last_status?: string
+          name?: string
+          region?: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          last_checked_at?: string | null
+          last_status?: string
+          name?: string
+          region?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
       }
       share_cards: {
         Row: {

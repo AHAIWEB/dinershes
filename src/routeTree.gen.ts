@@ -12,9 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as ArchiveRouteImport } from './routes/archive'
+import { Route as DownloadsRouteImport } from './routes/downloads'
 import { Route as IssueRouteImport } from './routes/issue'
 import { Route as IssueEditionIdRouteImport } from './routes/issue.$editionId'
 import { Route as IssueIndexRouteImport } from './routes/issue_.index'
+import { Route as PrintEditionIdRouteImport } from './routes/print.$editionId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -29,6 +31,11 @@ const AdminRoute = AdminRouteImport.update({
 const ArchiveRoute = ArchiveRouteImport.update({
   id: '/archive',
   path: '/archive',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DownloadsRoute = DownloadsRouteImport.update({
+  id: '/downloads',
+  path: '/downloads',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IssueRoute = IssueRouteImport.update({
@@ -46,44 +53,71 @@ const IssueIndexRoute = IssueIndexRouteImport.update({
   path: '/issue/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrintEditionIdRoute = PrintEditionIdRouteImport.update({
+  id: '/print/$editionId',
+  path: '/print/$editionId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/archive': typeof ArchiveRoute
+  '/downloads': typeof DownloadsRoute
   '/issue': typeof IssueRouteWithChildren
   '/issue/$editionId': typeof IssueEditionIdRoute
+  '/print/$editionId': typeof PrintEditionIdRoute
   '/issue/': typeof IssueIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/archive': typeof ArchiveRoute
+  '/downloads': typeof DownloadsRoute
   '/issue': typeof IssueIndexRoute
   '/issue/$editionId': typeof IssueEditionIdRoute
+  '/print/$editionId': typeof PrintEditionIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/archive': typeof ArchiveRoute
+  '/downloads': typeof DownloadsRoute
   '/issue': typeof IssueRouteWithChildren
   '/issue/$editionId': typeof IssueEditionIdRoute
+  '/print/$editionId': typeof PrintEditionIdRoute
   '/issue_/': typeof IssueIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/admin' | '/archive' | '/issue' | '/issue/$editionId' | '/issue/'
+    | '/'
+    | '/admin'
+    | '/archive'
+    | '/downloads'
+    | '/issue'
+    | '/issue/$editionId'
+    | '/print/$editionId'
+    | '/issue/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/archive' | '/issue' | '/issue/$editionId'
+  to:
+    | '/'
+    | '/admin'
+    | '/archive'
+    | '/downloads'
+    | '/issue'
+    | '/issue/$editionId'
+    | '/print/$editionId'
   id:
     | '__root__'
     | '/'
     | '/admin'
     | '/archive'
+    | '/downloads'
     | '/issue'
     | '/issue/$editionId'
+    | '/print/$editionId'
     | '/issue_/'
   fileRoutesById: FileRoutesById
 }
@@ -91,7 +125,9 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   ArchiveRoute: typeof ArchiveRoute
+  DownloadsRoute: typeof DownloadsRoute
   IssueRoute: typeof IssueRouteWithChildren
+  PrintEditionIdRoute: typeof PrintEditionIdRoute
   IssueIndexRoute: typeof IssueIndexRoute
 }
 
@@ -118,6 +154,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ArchiveRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/downloads': {
+      id: '/downloads'
+      path: '/downloads'
+      fullPath: '/downloads'
+      preLoaderRoute: typeof DownloadsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/issue': {
       id: '/issue'
       path: '/issue'
@@ -139,6 +182,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IssueIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/print/$editionId': {
+      id: '/print/$editionId'
+      path: '/print/$editionId'
+      fullPath: '/print/$editionId'
+      preLoaderRoute: typeof PrintEditionIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -156,7 +206,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   ArchiveRoute: ArchiveRoute,
+  DownloadsRoute: DownloadsRoute,
   IssueRoute: IssueRouteWithChildren,
+  PrintEditionIdRoute: PrintEditionIdRoute,
   IssueIndexRoute: IssueIndexRoute,
 }
 export const routeTree = rootRouteImport

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Check, Globe2, LoaderCircle, WandSparkles } from "lucide-react";
 import { approveArticle, createAiDraft, fetchSourceUrl } from "@/lib/newsroom.functions";
@@ -18,8 +18,12 @@ type Draft = {
 
 export function NewsroomPanel({
   onPlace,
+  initialUrl,
+  initialSection,
 }: {
   onPlace: (draft: Draft & { section: string }) => void;
+  initialUrl?: string;
+  initialSection?: string;
 }) {
   const fetchSource = useServerFn(fetchSourceUrl);
   const generate = useServerFn(createAiDraft);
@@ -37,6 +41,10 @@ export function NewsroomPanel({
   const [draft, setDraft] = useState<Draft>();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  useEffect(() => {
+    if (initialUrl) setUrl(initialUrl);
+    if (initialSection) setSection(initialSection);
+  }, [initialUrl, initialSection]);
   const importUrl = async () => {
     setBusy(true);
     setMessage("");
