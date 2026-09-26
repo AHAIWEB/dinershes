@@ -5,10 +5,11 @@ const DPI = 300;
 
 async function renderSheet(node: HTMLElement) {
   const { toPng } = await import("html-to-image");
-  const rect = node.getBoundingClientRect();
-  const targetW = W_IN * DPI;
+  // The sheet is laid out at 96 CSS px per inch, so 300 DPI = 300 / 96 pixel ratio.
   return toPng(node, {
-    pixelRatio: targetW / rect.width,
+    width: W_IN * 96,
+    height: H_IN * 96,
+    pixelRatio: DPI / 96,
     backgroundColor: "#ffffff",
     cacheBust: true,
   });
