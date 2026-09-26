@@ -1,13 +1,12 @@
 import { Link } from "@tanstack/react-router";
+import logo from "@/assets/shesh-khobor-logo-cropped.png.asset.json";
 
 export function TopBar({ mode }: { mode: "public" | "admin" }) {
   return (
     <div className="no-print border-b border-newsprint-rule bg-newsprint-paper">
       <div className="mx-auto grid max-w-[1400px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 sm:flex sm:justify-between">
         <Link to="/" className="flex min-w-0 items-center gap-2">
-          <span className="grid h-9 w-9 shrink-0 place-items-center bg-newsprint-accent font-display-bn text-lg text-newsprint-paper">
-            দি
-          </span>
+           <img src={logo.url} alt="শেষ খবর লোগো" className="h-9 w-20 shrink-0 object-contain" />
           <span className="min-w-0">
             <span className="block truncate font-display-bn text-base leading-none text-newsprint-ink">
               দিনের শেষ খবর

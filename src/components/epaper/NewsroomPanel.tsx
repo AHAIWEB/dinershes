@@ -19,10 +19,12 @@ type Draft = {
 
 export function NewsroomPanel({
   onPlace,
+  onPlaceSource,
   initialUrl,
   initialSection,
 }: {
   onPlace: (draft: Draft & { section: string; image?: string }) => void;
+  onPlaceSource: (story: { title: string; body: string; section: string; image?: string }) => void;
   initialUrl?: string;
   initialSection?: string;
 }) {
@@ -181,6 +183,15 @@ export function NewsroomPanel({
               className={input}
             />
           </label>
+          {sourceId && (
+            <button
+              onClick={() => onPlaceSource({ title: sourceTitle, body: sourceText, section, ...(image ? { image } : {}) })}
+              disabled={busy || !sourceTitle.trim() || !sourceText.trim()}
+              className={`${primary} w-full justify-center`}
+            >
+              হাতে সাজানোর জন্য পাতায় নিন
+            </button>
+          )}
           <div className="grid gap-3 sm:grid-cols-2">
             <label>
               <span className={label}>গুরুত্বপূর্ণ তথ্য</span>

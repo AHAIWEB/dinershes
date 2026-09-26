@@ -85,8 +85,16 @@ export function BlockView({ block }: { block: Block }) {
   }
 
   const size = block.type === "headline" ? 1.45 : 1;
+  const treatment = block.treatment ?? "standard";
+  const treatmentClass = treatment === "banner"
+    ? "border-y-[3px] border-newsprint-ink py-2"
+    : treatment === "boxed"
+      ? "border border-newsprint-rule bg-newsprint-tint p-2"
+      : treatment === "highlight"
+        ? "border-l-4 border-newsprint-accent bg-newsprint-tint p-2"
+        : "";
   return (
-    <article style={style}>
+    <article style={style} className={treatmentClass}>
       {kicker}
       <h3
         className="font-serif-bn font-bold leading-[1.15] text-newsprint-ink"

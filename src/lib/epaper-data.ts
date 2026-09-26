@@ -21,6 +21,7 @@ export type Block = {
   padding?: { top: number; right: number; bottom: number; left: number };
   invert?: boolean;
   columnSpan?: number;
+  treatment?: "standard" | "banner" | "boxed" | "highlight";
 };
 
 export type PageStatus = "draft" | "approved" | "published";

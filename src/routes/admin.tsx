@@ -16,6 +16,7 @@ import {
 } from "@/lib/editor.functions";
 import { TopBar } from "@/components/epaper/TopBar";
 import { NewspaperPage } from "@/components/epaper/NewspaperPage";
+import { Button } from "@/components/ui/button";
 import {
   autoLayoutColumns,
   blockPalette,
@@ -70,7 +71,7 @@ function AdminStudio() {
   const runWorkflow = useServerFn(runEditorialWorkflow);
   const fetchApproved = useServerFn(listApprovedArticles);
   const [pageIndex, setPageIndex] = useState(0);
-  const [selectedId, setSelectedId] = useState<string | null>("b2");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [tab, setTab] = useState<"বিষয়বস্তু" | "বিন্যাস" | "সেটিংস">("বিষয়বস্তু");
   const [zoom, setZoom] = useState(72);
   const [nav, setNav] = useState("পৃষ্ঠা ডিজাইন");
@@ -79,6 +80,8 @@ function AdminStudio() {
   >(null);
   const [toast, setToast] = useState<string | null>(null);
   const [pick, setPick] = useState<{ url: string; section: string }>();
+  const [placementPage, setPlacementPage] = useState(0);
+  const [placementColumn, setPlacementColumn] = useState(0);
 
   useEffect(() => {
     let mounted = true;
@@ -212,6 +215,43 @@ function AdminStudio() {
   };
   const pageLocked = page.status === "published" || edition.status === "published";
 
+  const switchPage = (index: number) => {
+    setPageIndex(index);
+    setSelectedId(null);
+    setTab("বিষয়বস্তু");
+  };
+
+  const placeStory = (story: { title: string; body: string; section: string; image?: string; subtitle?: string; summary?: string; imageCaption?: string }) => {
+    const target = edition.pages[placementPage];
+    if (!target || target.status === "published" || edition.status === "published") {
+      return notify("প্রকাশিত পাতা বদলানো যাবে না। অন্য পাতা বাছুন।");
+    }
+    const headline = newBlock("headline");
+    headline.label = story.title;
+    headline.section = story.section;
+    headline.credit = story.subtitle ?? "";
+    const article = newBlock("article");
+    article.label = story.summary || story.title;
+    article.body = story.body;
+    article.section = story.section;
+    const blocks = [headline];
+    if (story.image) {
+      const image = newBlock("image");
+      image.imageSrc = story.image;
+      image.label = story.imageCaption || story.title;
+      image.section = story.section;
+      blocks.push(image);
+    }
+    blocks.push(article);
+    setEdition((prev) => ({ ...prev, pages: prev.pages.map((p, i) => i === placementPage
+      ? { ...p, columns: p.columns.map((col, ci) => ci === placementColumn ? [...col, ...blocks] : col) }
+      : p) }));
+    switchPage(placementPage);
+    setSelectedId(headline.id);
+    setNav("পৃষ্ঠা ডিজাইন");
+    notify("খবর পাতায় বসেছে—যাচাই করে সংরক্ষণ করুন");
+  };
+
   const updatePage = (fn: (cols: Block[][]) => Block[][]) =>
     setEdition((prev) => ({
       ...prev,
@@ -267,7 +307,7 @@ function AdminStudio() {
         },
       ],
     }));
-    setPageIndex(edition.pages.length);
+    switchPage(edition.pages.length);
   };
 
   const spacingField = (key: "margin" | "padding", side: "top" | "right" | "bottom" | "left") => (
@@ -391,30 +431,19 @@ function AdminStudio() {
           ) : nav === "AI নিউজরুম" ? (
             <>
             <FeedPanel onPick={(url, section) => setPick({ url, section })} />
+            <div className="mb-3 flex flex-wrap items-center gap-2 border-b border-newsprint-rule bg-newsprint-paper p-3 font-serif-bn text-sm">
+              <span>খবর বসবে</span>
+              <select aria-label="খবরের পাতা" value={placementPage} onChange={(e) => setPlacementPage(Number(e.target.value))} className={inputCls}>
+                {edition.pages.map((p, i) => <option key={p.id} value={i}>পৃষ্ঠা {p.no} · {p.title}</option>)}
+              </select>
+              <select aria-label="খবরের কলাম" value={placementColumn} onChange={(e) => setPlacementColumn(Number(e.target.value))} className={inputCls}>
+                {Array.from({ length: 6 }, (_, i) => <option key={i} value={i}>কলাম {i + 1}</option>)}
+              </select>
+            </div>
             <NewsroomPanel
               {...(pick ? { initialUrl: pick.url, initialSection: pick.section } : {})}
-              onPlace={(draft) => {
-                const block = newBlock("article");
-                block.label = draft.title;
-                block.body = `${draft.subtitle}\n${draft.summary}\n${draft.body}`;
-                block.section = draft.section;
-                block.columnSpan = 2;
-                const extra: ReturnType<typeof newBlock>[] = [];
-                if (draft.image) {
-                  const img = newBlock("image");
-                  img.imageSrc = draft.image;
-                  img.label = draft.imageCaption || draft.title;
-                  img.section = draft.section;
-                  img.columnSpan = 2;
-                  extra.push(img);
-                }
-                updatePage((cols) =>
-                  cols.map((col, index) => (index === 0 ? [...col, ...extra, block] : col)),
-                );
-                setSelectedId(block.id);
-                setNav("পৃষ্ঠা ডিজাইন");
-                notify("অনুমোদিত সংবাদ পাতায় বসেছে");
-              }}
+              onPlace={placeStory}
+              onPlaceSource={placeStory}
             />
             </>
           ) : nav === "শেয়ার কার্ড" ? (
@@ -528,15 +557,24 @@ function AdminStudio() {
                     </p>
                     <div className="mt-3 space-y-2">
                       {blockPalette.map((b) => (
-                        <div
+                         <Button
                           key={b.type}
                           draggable
                           onDragStart={() => setDragging({ kind: "new", type: b.type })}
-                          className="cursor-grab rounded border border-newsprint-paper/20 bg-newsprint-paper/5 px-2 py-2 text-center active:cursor-grabbing"
+                           onClick={() => {
+                             if (pageLocked) return;
+                             const block = newBlock(b.type);
+                             block.section = page.section;
+                             updatePage((cols) => cols.map((col, i) => i === 0 ? [...col, block] : col));
+                             setSelectedId(block.id);
+                           }}
+                           disabled={pageLocked}
+                           variant="ghost"
+                           className="h-auto w-full flex-col border border-newsprint-paper/20 px-2 py-2 text-center text-newsprint-paper active:cursor-grabbing"
                         >
                           <p className="font-sans text-xs font-semibold">{b.name}</p>
                           <p className="font-serif-bn text-[0.6rem] opacity-70">{b.hint}</p>
-                        </div>
+                         </Button>
                       ))}
                     </div>
                   </div>
@@ -546,7 +584,7 @@ function AdminStudio() {
                       <NewspaperPage
                         edition={edition}
                         page={page}
-                        editable
+                         editable={!pageLocked}
                         selectedId={selectedId}
                         onSelect={(b) => setSelectedId(b.id)}
                         onDropBlock={handleDrop}
@@ -555,8 +593,19 @@ function AdminStudio() {
                     </div>
                   </div>
 
-                  <div className="no-print rounded border border-newsprint-rule bg-newsprint-paper p-3">
-                    <p className="font-serif-bn text-sm font-semibold">অংশের সেটিংস</p>
+                   <div className="no-print min-w-0 border border-newsprint-rule bg-newsprint-paper p-3">
+                     <p className="font-serif-bn text-sm font-semibold">পৃষ্ঠা {page.no} · অংশের সেটিংস</p>
+                     <Field label="পৃষ্ঠার শিরোনাম">
+                       <input value={page.title} disabled={pageLocked} onChange={(e) => setEdition((prev) => ({ ...prev, pages: prev.pages.map((p, i) => i === pageIndex ? { ...p, title: e.target.value } : p) }))} className={inputCls} />
+                     </Field>
+                     <p className="mt-3 border-t border-newsprint-rule pt-2 font-serif-bn text-xs font-bold">এই পাতার অংশ</p>
+                     <div className="mt-1 max-h-36 space-y-1 overflow-y-auto">
+                       {page.columns.flatMap((col, ci) => col.map((block) => (
+                         <Button key={block.id} variant="ghost" onClick={() => setSelectedId(block.id)} className={`h-auto w-full justify-start whitespace-normal text-left font-serif-bn text-xs ${selectedId === block.id ? "bg-newsprint-tint text-newsprint-accent" : ""}`}>
+                           {ci + 1} · {block.label.slice(0, 40)}
+                         </Button>
+                       )))}
+                     </div>
                     <p className="font-serif-bn text-[0.62rem] text-newsprint-muted">
                       {selected
                         ? `${selected.label} · ${selected.section}`
@@ -581,7 +630,7 @@ function AdminStudio() {
                           ))}
                         </div>
 
-                        <div className="mt-3 space-y-3 font-sans text-[0.68rem]">
+                         <fieldset disabled={pageLocked} className="mt-3 space-y-3 font-sans text-[0.68rem] disabled:opacity-60">
                           {tab === "বিষয়বস্তু" && (
                             <>
                               <Field label="শিরোনাম">
@@ -630,6 +679,16 @@ function AdminStudio() {
 
                           {tab === "বিন্যাস" && (
                             <>
+                               {(selected.type === "headline" || selected.type === "article") && (
+                                 <Field label="শিরোনামের ধরন">
+                                   <select value={selected.treatment ?? "standard"} onChange={(e) => patchSelected({ treatment: e.target.value as NonNullable<Block["treatment"]> })} className={inputCls}>
+                                     <option value="standard">সাধারণ</option>
+                                     <option value="banner">বড় শিরোনাম</option>
+                                     <option value="boxed">বক্স সংবাদ</option>
+                                     <option value="highlight">হাইলাইটস</option>
+                                   </select>
+                                 </Field>
+                               )}
                               <Field
                                 label={`কলামের বিস্তার · ${selected.columnSpan ?? 1} কলাম · ${COLUMN_WIDTHS[(selected.columnSpan ?? 1) - 1]} ইঞ্চি`}
                               >
@@ -771,20 +830,6 @@ function AdminStudio() {
                                 অংশ নম্বর: {selected.id} · ধরন:{" "}
                                 {blockPalette.find((item) => item.type === selected.type)?.name}
                               </p>
-                              <Field label="পৃষ্ঠার শিরোনাম">
-                                <input
-                                  value={page.title}
-                                  onChange={(e) =>
-                                    setEdition((prev) => ({
-                                      ...prev,
-                                      pages: prev.pages.map((p, i) =>
-                                        i === pageIndex ? { ...p, title: e.target.value } : p,
-                                      ),
-                                    }))
-                                  }
-                                  className={inputCls}
-                                />
-                              </Field>
                               <button
                                 onClick={removeSelected}
                                 className="w-full rounded border border-newsprint-accent px-2 py-1.5 text-newsprint-accent"
@@ -793,7 +838,7 @@ function AdminStudio() {
                               </button>
                             </>
                           )}
-                        </div>
+                         </fieldset>
                       </>
                     )}
                   </div>
@@ -804,7 +849,7 @@ function AdminStudio() {
                 {edition.pages.map((p, i) => (
                   <button
                     key={p.id}
-                    onClick={() => setPageIndex(i)}
+                     onClick={() => switchPage(i)}
                     className={`w-32 shrink-0 border bg-newsprint-paper p-1 text-left ${
                       i === pageIndex ? "border-newsprint-accent" : "border-newsprint-rule"
                     }`}
