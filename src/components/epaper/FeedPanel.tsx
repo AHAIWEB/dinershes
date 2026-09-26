@@ -12,7 +12,15 @@ const REGION_SECTION: Record<string, string> = {
 };
 
 /** Pick a saved Bangla news feed, browse its latest items and send one to the AI newsroom. */
-export function FeedPanel({ onPick }: { onPick: (url: string, section: string) => void }) {
+export function FeedPanel({
+  onPick,
+  pages = [],
+  onAutoPlace,
+}: {
+  onPick: (url: string, section: string) => void;
+  pages?: { no: number; title: string; section?: string }[];
+  onAutoPlace?: (items: Item[], pageIndex: number, replace: boolean, section: string) => void;
+}) {
   const load = useServerFn(listFeeds);
   const read = useServerFn(readFeed);
   const add = useServerFn(addFeed);
@@ -23,6 +31,36 @@ export function FeedPanel({ onPick }: { onPick: (url: string, section: string) =
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
   const [newUrl, setNewUrl] = useState("");
+  const [autoPage, setAutoPage] = useState(0);
+  const [autoCount, setAutoCount] = useState(6);
+  const [replace, setReplace] = useState(true);
+
+  /** Reads every active feed of the chosen region and lays the latest N stories onto the chosen page. */
+  const autoFill = async () => {
+    if (!onAutoPlace) return;
+    setBusy(true);
+    setMsg("");
+    const active = feeds.filter((f) => f.region === region && f.active);
+    const results = await Promise.all(
+      active.map((f) => read({ data: { id: f.id } }).catch(() => ({ items: [] as Item[], error: "" }))),
+    );
+    // Interleave feeds so one site doesn't fill the whole page.
+    const seen = new Set<string>();
+    const picked: Item[] = [];
+    for (let i = 0; picked.length < autoCount && i < 25; i += 1) {
+      for (const r of results) {
+        const it = r.items[i];
+        if (it && !seen.has(it.link) && picked.length < autoCount) {
+          seen.add(it.link);
+          picked.push(it);
+        }
+      }
+    }
+    setBusy(false);
+    if (!picked.length) return setMsg("সক্রিয় ফিড থেকে কোনো খবর পাওয়া যায়নি।");
+    onAutoPlace(picked, autoPage, replace, pages[autoPage]?.section ?? REGION_SECTION[region] ?? "দেশ");
+    void refresh();
+  };
 
   const refresh = () => load().then(setFeeds).catch((e) => setMsg(String(e.message ?? e)));
   useEffect(() => {
@@ -93,6 +131,25 @@ export function FeedPanel({ onPick }: { onPick: (url: string, section: string) =
           ফিড যোগ
         </button>
       </div>
+      {onAutoPlace && (
+        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-newsprint-rule pt-3 font-serif-bn text-xs">
+          <span className="font-bold">স্বয়ংক্রিয় বিন্যাস:</span>
+          <select aria-label="কোন পাতায়" value={autoPage} onChange={(e) => setAutoPage(Number(e.target.value))} className="border border-newsprint-rule bg-background px-2 py-1">
+            {pages.map((p, i) => <option key={i} value={i}>পৃষ্ঠা {p.no} · {p.title}</option>)}
+          </select>
+          <label className="flex items-center gap-1">
+            খবর সংখ্যা
+            <input type="number" min={1} max={20} value={autoCount} onChange={(e) => setAutoCount(Math.max(1, Math.min(20, Number(e.target.value) || 1)))} className="w-14 border border-newsprint-rule bg-background px-1 py-1" />
+          </label>
+          <label className="flex items-center gap-1">
+            <input type="checkbox" checked={replace} onChange={(e) => setReplace(e.target.checked)} />
+            পুরনো খবর সরিয়ে নতুন
+          </label>
+          <button disabled={busy} onClick={autoFill} className="bg-newsprint-ink px-3 py-1 text-newsprint-paper disabled:opacity-50">
+            সক্রিয় ফিড থেকে পাতায় বসান
+          </button>
+        </div>
+      )}
       {busy && <p className="mt-3 font-serif-bn text-xs">ফিড পড়া হচ্ছে…</p>}
       {msg && <p className="mt-3 font-serif-bn text-xs text-newsprint-accent">{msg}</p>}
       <ul className="mt-3 max-h-80 space-y-2 overflow-y-auto">

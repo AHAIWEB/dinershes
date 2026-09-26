@@ -252,6 +252,51 @@ function AdminStudio() {
     notify("খবর পাতায় বসেছে—যাচাই করে সংরক্ষণ করুন");
   };
 
+  /** Auto-layout: lead story spans 4 columns at top, the rest flow round-robin over the 6 columns. */
+  const autoPlace = (
+    items: { title: string; link: string; summary: string; image?: string }[],
+    pageIndex: number,
+    replace: boolean,
+    section: string,
+  ) => {
+    const target = edition.pages[pageIndex];
+    if (!target || target.status === "published" || edition.status === "published") {
+      return notify("প্রকাশিত পাতা বদলানো যাবে না। নতুন সংস্করণ বা অন্য পাতা বাছুন।");
+    }
+    const cols: Block[][] = replace ? Array.from({ length: 6 }, () => []) : target.columns.map((c) => [...c]);
+    items.forEach((it, idx) => {
+      const lead = idx === 0;
+      const ci = lead ? 0 : lead ? 0 : (idx - 1) % 6;
+      const col = lead ? 0 : ci;
+      const headline = newBlock("headline");
+      headline.label = it.title;
+      headline.section = section;
+      if (lead) headline.columnSpan = 4;
+      const out: Block[] = [headline];
+      if (it.image && (lead || idx < 4)) {
+        const img = newBlock("image");
+        img.imageSrc = it.image;
+        img.label = it.title;
+        img.section = section;
+        if (lead) img.columnSpan = 4;
+        out.push(img);
+      }
+      const art = newBlock("article");
+      art.label = it.summary.slice(0, 120) || it.title;
+      art.body = `${it.summary || it.title}\n\nসূত্র: ${new URL(it.link).hostname.replace(/^www\./, "")}`;
+      art.section = section;
+      if (lead) art.columnSpan = 4;
+      out.push(art);
+      // Lead occupies columns 1-4; place remaining stories in columns 5-6 first, then below.
+      const dest = lead ? 0 : idx <= 2 ? 3 + idx : col;
+      cols[Math.min(5, dest)]!.push(...out);
+    });
+    setEdition((prev) => ({ ...prev, pages: prev.pages.map((p, i) => (i === pageIndex ? { ...p, columns: cols } : p)) }));
+    switchPage(pageIndex);
+    setNav("পৃষ্ঠা ডিজাইন");
+    notify(`${items.length}টি খবর পৃষ্ঠা ${target.no}-এ বসেছে—প্রয়োজনে কলাম বদলে সংরক্ষণ ও প্রকাশ করুন`);
+  };
+
   const updatePage = (fn: (cols: Block[][]) => Block[][]) =>
     setEdition((prev) => ({
       ...prev,
@@ -430,7 +475,7 @@ function AdminStudio() {
             />
           ) : nav === "AI নিউজরুম" ? (
             <>
-            <FeedPanel onPick={(url, section) => setPick({ url, section })} />
+            <FeedPanel onPick={(url, section) => setPick({ url, section })} pages={edition.pages.map((p) => ({ no: p.no, title: p.title, section: p.title }))} onAutoPlace={autoPlace} />
             <div className="mb-3 flex flex-wrap items-center gap-2 border-b border-newsprint-rule bg-newsprint-paper p-3 font-serif-bn text-sm">
               <span>খবর বসবে</span>
               <select aria-label="খবরের পাতা" value={placementPage} onChange={(e) => setPlacementPage(Number(e.target.value))} className={inputCls}>
