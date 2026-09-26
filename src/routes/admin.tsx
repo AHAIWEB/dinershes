@@ -399,7 +399,7 @@ function AdminStudio() {
                 block.body = `${draft.subtitle}\n${draft.summary}\n${draft.body}`;
                 block.section = draft.section;
                 block.columnSpan = 2;
-                const extra = [];
+                const extra: ReturnType<typeof newBlock>[] = [];
                 if (draft.image) {
                   const img = newBlock("image");
                   img.imageSrc = draft.image;
