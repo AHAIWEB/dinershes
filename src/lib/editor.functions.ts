@@ -23,6 +23,7 @@ const blockSchema = z.object({
     .object({ top: z.number(), right: z.number(), bottom: z.number(), left: z.number() })
     .optional(),
   invert: z.boolean().optional(),
+  treatment: z.enum(["standard", "banner", "boxed", "highlight"]).optional(),
 });
 const inputSchema = z.object({
   editionId: z.string().uuid().optional(),
@@ -203,6 +204,7 @@ export const saveEditorialEdition = createServerFn({ method: "POST" })
             margin: block.margin,
             padding: block.padding,
             invert: block.invert,
+             treatment: block.treatment,
           },
         })),
       );

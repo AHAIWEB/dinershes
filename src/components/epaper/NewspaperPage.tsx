@@ -1,5 +1,6 @@
 import type { Block, Edition, Page } from "@/lib/epaper-data";
 import { BlockView } from "./BlockView";
+import logo from "@/assets/shesh-khobor-logo.png";
 
 type Props = {
   edition: Edition;
@@ -28,9 +29,10 @@ export function NewspaperPage({
             <p className="font-serif-bn text-[0.66rem] text-newsprint-muted">
               সত্যের সঙ্গে, মানুষের পাশে
             </p>
-            <h1 className="font-display-bn text-3xl leading-none text-newsprint-accent sm:text-4xl">
-              দিনের শেষ খবর
-            </h1>
+             <div className="flex items-center gap-2">
+               <img src={logo} alt="শেষ খবর" className="h-9 w-28 object-contain sm:h-12 sm:w-40" />
+               <h1 className="font-display-bn text-2xl leading-none text-newsprint-accent sm:text-3xl">দিনের শেষ খবর</h1>
+             </div>
           </div>
           <div className="font-serif-bn text-[0.68rem] text-newsprint-muted sm:text-right">
             <p>{edition.dateBn}</p>
