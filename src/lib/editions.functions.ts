@@ -45,6 +45,7 @@ export const listPublishedEditions = createServerFn({ method: "GET" })
     const { data: rows, error } = await query;
     if (error) throw new Error(error.message);
     return (rows ?? []).filter((edition) => {
+      if (!edition.edition_pages.length) return false;
       const sectionMatch =
         !data.section || edition.edition_pages.some((page) => page.section === data.section);
       const needle = data.query?.trim().toLocaleLowerCase("bn");
