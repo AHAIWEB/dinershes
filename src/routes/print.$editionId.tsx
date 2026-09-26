@@ -78,7 +78,7 @@ function PrintPage() {
       </div>
       <main className="mx-auto max-w-[1100px] space-y-8 px-4 py-6">
         {edition.pages.map((page, i) => (
-          <section key={page.id} className="print-page">
+          <section key={page.id} id={`pata-${page.no}`} className="print-page">
             <div className="no-print mb-2 flex flex-wrap items-center justify-between gap-2">
               <p className="font-serif-bn text-sm font-bold">
                 পাতা {page.no} · {page.title}
