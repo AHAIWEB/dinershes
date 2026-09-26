@@ -135,3 +135,57 @@ export async function generateNewsDraft(input: {
     throw new Error("AI খসড়াটি সঠিক কাঠামোয় আসেনি। আবার চেষ্টা করুন।");
   }
 }
+
+export type FeedItem = {
+  title: string;
+  link: string;
+  summary: string;
+  image?: string;
+  published?: string;
+};
+
+/** Reads an RSS 2.0 or Atom feed through the same SSRF guard as article fetching. */
+export async function fetchFeed(feedUrl: string): Promise<FeedItem[]> {
+  let url = safeUrl(feedUrl);
+  let response: Response | undefined;
+  for (let i = 0; i < 4; i += 1) {
+    response = await fetch(url, {
+      redirect: "manual",
+      headers: { "User-Agent": "DinerSheshKhobor/1.0 (+newsroom feed reader)" },
+    });
+    if (response.status >= 300 && response.status < 400) {
+      const location = response.headers.get("location");
+      if (!location) break;
+      url = safeUrl(new URL(location, url).toString());
+      continue;
+    }
+    break;
+  }
+  if (!response?.ok) throw new Error("ফিডটি এখন সাড়া দিচ্ছে না।");
+  const xml = (await response.text()).slice(0, 3_000_000);
+  if (!/<(rss|feed|rdf)/i.test(xml)) throw new Error("এই ঠিকানায় RSS ফিড পাওয়া যায়নি।");
+  const { document } = parseHTML(`<root>${xml.replace(/<\?xml[^>]*>/, "")}</root>`);
+  const strip = (s: string) =>
+    s.replace(/<!\[CDATA\[|\]\]>/g, "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  const nodes = [...document.querySelectorAll("item, entry")].slice(0, 25);
+  return nodes
+    .map((node) => {
+      const get = (sel: string) => node.querySelector(sel)?.textContent ?? "";
+      const linkEl = node.querySelector("link");
+      const link = strip(linkEl?.getAttribute("href") || linkEl?.textContent || get("guid"));
+      const rawDesc = get("description") || get("summary") || get("content");
+      const imgMatch = /<img[^>]+src=["']([^"']+)/i.exec(node.innerHTML);
+      const media =
+        node.querySelector("enclosure")?.getAttribute("url") ||
+        node.querySelector("media\\:content, content")?.getAttribute("url") ||
+        imgMatch?.[1];
+      return {
+        title: strip(get("title")).slice(0, 300),
+        link,
+        summary: strip(rawDesc).slice(0, 600),
+        ...(media && media.startsWith("https://") ? { image: media } : {}),
+        ...(get("pubDate") || get("published") ? { published: strip(get("pubDate") || get("published")) } : {}),
+      };
+    })
+    .filter((i) => i.title && /^https?:\/\//.test(i.link));
+}
