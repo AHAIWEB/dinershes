@@ -681,7 +681,7 @@ function AdminStudio() {
                             <>
                                {(selected.type === "headline" || selected.type === "article") && (
                                  <Field label="শিরোনামের ধরন">
-                                   <select value={selected.treatment ?? "standard"} onChange={(e) => patchSelected({ treatment: e.target.value as Block["treatment"] })} className={inputCls}>
+                                   <select value={selected.treatment ?? "standard"} onChange={(e) => patchSelected({ treatment: e.target.value as NonNullable<Block["treatment"]> })} className={inputCls}>
                                      <option value="standard">সাধারণ</option>
                                      <option value="banner">বড় শিরোনাম</option>
                                      <option value="boxed">বক্স সংবাদ</option>
