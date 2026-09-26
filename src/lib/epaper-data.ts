@@ -30,7 +30,7 @@ export type Page = {
   no: number;
   title: string;
   section: string;
-  status?: PageStatus;
+  status?: PageStatus | undefined;
   columns: Block[][];
 };
 

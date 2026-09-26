@@ -146,7 +146,6 @@ function AdminStudio() {
         pages: prev.pages.map((p) => (p.status === "published" ? p : { ...p, status: "draft" })),
       }));
       notify("সংরক্ষিত হয়েছে · অনুমোদন আবার দিতে হবে");
-      return result.id;
     } catch (error) {
       notify(error instanceof Error ? error.message : "সংরক্ষণ করা যায়নি।");
     } finally {
