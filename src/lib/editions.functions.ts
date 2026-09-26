@@ -37,7 +37,7 @@ export const listPublishedEditions = createServerFn({ method: "GET" })
       .select(
         "id,edition_number,publication_date,date_bn,hijri_date,published_at,edition_pages(id,page_number,title,section)",
       )
-      .order("publication_date", { ascending: false });
+       .order("published_at", { ascending: false });
     if (data.month)
       query = query
         .gte("publication_date", `${data.month}-01`)
