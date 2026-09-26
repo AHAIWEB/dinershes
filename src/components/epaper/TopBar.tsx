@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import logo from "@/assets/shesh-khobor-logo.png.asset.json";
+import logo from "@/assets/shesh-khobor-logo-cropped.png.asset.json";
 
 export function TopBar({ mode }: { mode: "public" | "admin" }) {
   return (
