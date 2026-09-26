@@ -81,29 +81,41 @@ export type Database = {
       }
       edition_pages: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           created_at: string
           edition_id: string
           id: string
           page_number: number
+          published_at: string | null
           section: string
+          status: string
           title: string
           updated_at: string
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           edition_id: string
           id?: string
           page_number: number
+          published_at?: string | null
           section: string
+          status?: string
           title: string
           updated_at?: string
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           edition_id?: string
           id?: string
           page_number?: number
+          published_at?: string | null
           section?: string
+          status?: string
           title?: string
           updated_at?: string
         }
@@ -119,6 +131,8 @@ export type Database = {
       }
       editions: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           created_at: string
           created_by: string | null
           date_bn: string
@@ -132,6 +146,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           created_by?: string | null
           date_bn: string
@@ -145,6 +161,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           created_by?: string | null
           date_bn?: string
@@ -359,7 +377,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      publish_due_editions: { Args: never; Returns: number }
+      [_ in never]: never
     }
     Enums: {
       app_role: "admin" | "editor" | "designer"

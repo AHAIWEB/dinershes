@@ -29,8 +29,7 @@ const inputSchema = z.object({
   number: z.string(),
   dateBn: z.string(),
   hijri: z.string(),
-  status: z.enum(["draft", "review", "scheduled", "published"]),
-  scheduledFor: z.string().datetime().optional(),
+  status: z.enum(["draft", "review"]),
   pages: z
     .array(
       z.object({
@@ -54,7 +53,7 @@ export const loadEditorialEdition = createServerFn({ method: "GET" })
     if (!role) throw new Error("সম্পাদনার অনুমতি নেই।");
     const { data: edition, error } = await context.supabase
       .from("editions")
-      .select("id,edition_number,date_bn,hijri_date,status,scheduled_for")
+      .select("id,edition_number,date_bn,hijri_date,status,approved_at")
       .neq("status", "published")
       .order("created_at", { ascending: false })
       .limit(1)
@@ -63,7 +62,7 @@ export const loadEditorialEdition = createServerFn({ method: "GET" })
     if (!edition) return null;
     const { data: pages, error: pageError } = await context.supabase
       .from("edition_pages")
-      .select("id,page_number,title,section")
+      .select("id,page_number,title,section,status")
       .eq("edition_id", edition.id)
       .order("page_number");
     if (pageError) throw new Error(pageError.message);
@@ -112,8 +111,6 @@ export const saveEditorialEdition = createServerFn({ method: "POST" })
       .limit(1)
       .maybeSingle();
     if (!role) throw new Error("সম্পাদনার অনুমতি নেই।");
-    if (data.status === "scheduled" && !data.scheduledFor)
-      throw new Error("প্রকাশের সময় নির্বাচন করুন।");
     let editionId = data.editionId;
     if (editionId) {
       const { data: existing } = await context.supabase
@@ -150,13 +147,15 @@ export const saveEditorialEdition = createServerFn({ method: "POST" })
     }
     const { data: oldPages, error: pagesError } = await context.supabase
       .from("edition_pages")
-      .select("id,page_number")
+      .select("id,page_number,status")
       .eq("edition_id", editionId);
     if (pagesError) throw new Error(pagesError.message);
     for (let index = 0; index < data.pages.length; index++) {
       const page = data.pages[index];
       if (!page) continue;
-      let pageId = oldPages?.find((p) => p.page_number === index + 1)?.id;
+      const old = oldPages?.find((p) => p.page_number === index + 1);
+      if (old?.status === "published") continue; // published pages are frozen
+      let pageId = old?.id;
       if (!pageId) {
         const { data: created, error } = await context.supabase
           .from("edition_pages")
@@ -173,7 +172,7 @@ export const saveEditorialEdition = createServerFn({ method: "POST" })
       } else {
         const { error } = await context.supabase
           .from("edition_pages")
-          .update({ title: page.title, section: page.section })
+          .update({ title: page.title, section: page.section, status: "draft" })
           .eq("id", pageId);
         if (error) throw new Error(error.message);
       }
@@ -216,10 +215,71 @@ export const saveEditorialEdition = createServerFn({ method: "POST" })
       .from("editions")
       .update({
         status: data.status,
-        scheduled_for: data.scheduledFor ?? null,
-        published_at: data.status === "published" ? new Date().toISOString() : null,
       })
       .eq("id", editionId);
     if (statusError) throw new Error(statusError.message);
     return { id: editionId };
+  });
+
+const workflowSchema = z.object({
+  editionId: z.string().uuid(),
+  scope: z.enum(["edition", "page"]),
+  pageNumber: z.number().int().min(1).max(4).optional(),
+  action: z.enum(["approve", "publish"]),
+});
+
+/** Manual approval/publication. The database trigger re-checks role + approval. */
+export const runEditorialWorkflow = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input) => workflowSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: roles } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId);
+    if (!roles?.some((r) => r.role === "admin" || r.role === "editor"))
+      throw new Error("শুধু সম্পাদক অনুমোদন ও প্রকাশ করতে পারেন।");
+    const status = data.action === "approve" ? "approved" : "published";
+    if (data.scope === "edition") {
+      const { error } = await context.supabase
+        .from("editions")
+        .update({ status })
+        .eq("id", data.editionId);
+      if (error) throw new Error(error.message);
+    } else {
+      if (!data.pageNumber) throw new Error("পাতা নির্বাচন করুন।");
+      const { error } = await context.supabase
+        .from("edition_pages")
+        .update({ status })
+        .eq("edition_id", data.editionId)
+        .eq("page_number", data.pageNumber);
+      if (error) throw new Error(error.message);
+    }
+    return { ok: true, status };
+  });
+
+/** Approved newsroom articles for auto-layout, filtered by section when given. */
+export const listApprovedArticles = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((input) => z.object({ section: z.string().optional() }).parse(input ?? {}))
+  .handler(async ({ data, context }) => {
+    let query = context.supabase
+      .from("articles")
+      .select("id,title,subtitle,summary,body,section,image_caption,source_items(lead_image_url)")
+      .in("status", ["approved", "placed"])
+      .order("approved_at", { ascending: false })
+      .limit(12);
+    if (data.section) query = query.eq("section", data.section);
+    const { data: rows, error } = await query;
+    if (error) throw new Error(error.message);
+    return (rows ?? []).map((row) => ({
+      id: row.id,
+      title: row.title,
+      subtitle: row.subtitle,
+      summary: row.summary,
+      body: row.body,
+      section: row.section,
+      imageCaption: row.image_caption,
+      image: (row.source_items as { lead_image_url: string | null } | null)?.lead_image_url ?? null,
+    }));
   });

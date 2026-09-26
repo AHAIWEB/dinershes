@@ -37,7 +37,6 @@ export const listPublishedEditions = createServerFn({ method: "GET" })
       .select(
         "id,edition_number,publication_date,date_bn,hijri_date,published_at,edition_pages(id,page_number,title,section)",
       )
-      .eq("status", "published")
       .order("publication_date", { ascending: false });
     if (data.month)
       query = query
@@ -46,6 +45,7 @@ export const listPublishedEditions = createServerFn({ method: "GET" })
     const { data: rows, error } = await query;
     if (error) throw new Error(error.message);
     return (rows ?? []).filter((edition) => {
+      if (!edition.edition_pages.length) return false;
       const sectionMatch =
         !data.section || edition.edition_pages.some((page) => page.section === data.section);
       const needle = data.query?.trim().toLocaleLowerCase("bn");
@@ -66,7 +66,6 @@ export const getPublishedEdition = createServerFn({ method: "GET" })
       .from("editions")
       .select("id,edition_number,publication_date,date_bn,hijri_date,status")
       .eq("id", data.id)
-      .eq("status", "published")
       .single();
     if (error) throw new Error("প্রকাশিত সংস্করণটি পাওয়া যায়নি।");
     const { data: pages } = await client

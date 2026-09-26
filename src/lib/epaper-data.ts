@@ -23,11 +23,14 @@ export type Block = {
   columnSpan?: number;
 };
 
+export type PageStatus = "draft" | "approved" | "published";
+
 export type Page = {
   id: string;
   no: number;
   title: string;
   section: string;
+  status?: PageStatus | undefined;
   columns: Block[][];
 };
 
@@ -36,9 +39,88 @@ export type Edition = {
   number: string;
   dateBn: string;
   hijri: string;
-  status: "draft" | "review" | "scheduled" | "published";
+  status: "draft" | "review" | "approved" | "published";
   pages: Page[];
 };
+
+export type LayoutArticle = {
+  id: string;
+  title: string;
+  subtitle: string;
+  summary: string;
+  body: string;
+  section: string;
+  image?: string | null;
+  imageCaption?: string;
+};
+
+const uid = () => `a-${Math.random().toString(36).slice(2, 9)}`;
+
+/**
+ * Auto-layout for the 6-column sheet. Wide blocks sit in the first column and
+ * span to the right, so their spanned neighbours are left empty to avoid overlap:
+ * left band = columns 1–4 (lead story + secondary stories), right rail = columns 5–6.
+ */
+export function autoLayoutColumns(articles: LayoutArticle[], section: string): Block[][] {
+  const cols: Block[][] = [[], [], [], [], [], []];
+  const [lead, ...rest] = articles;
+  if (lead) {
+    cols[0]!.push({
+      id: uid(),
+      type: "headline",
+      section: lead.section || section,
+      label: lead.title,
+      credit: lead.subtitle,
+      columnSpan: 4,
+      fontScale: 1.35,
+    });
+    if (lead.image)
+      cols[0]!.push({
+        id: uid(),
+        type: "image",
+        section: lead.section || section,
+        label: lead.title,
+        credit: lead.imageCaption || lead.title,
+        imageSrc: lead.image,
+        imageHeight: 260,
+        fit: "cover",
+        columnSpan: 4,
+      });
+    cols[0]!.push({
+      id: uid(),
+      type: "article",
+      section: lead.section || section,
+      label: lead.summary || lead.subtitle,
+      body: lead.body,
+      columnSpan: 4,
+      fontScale: 0.85,
+    });
+  }
+  rest.forEach((article, index) => {
+    const inRail = index % 3 === 2;
+    const block: Block = {
+      id: uid(),
+      type: "article",
+      section: article.section || section,
+      label: article.title,
+      credit: article.subtitle,
+      body: article.summary || article.body.slice(0, 420),
+      columnSpan: inRail ? 2 : 4,
+    };
+    (inRail ? cols[4]! : cols[0]!).push({ ...block });
+    if (!inRail) cols[0]!.push({ id: uid(), type: "divider", section, label: "", columnSpan: 4 });
+  });
+  cols[4]!.push({
+    id: uid(),
+    type: "ad",
+    section: "বিজ্ঞাপন",
+    label: "আপনার প্রতিষ্ঠানের বিজ্ঞাপন এখানে",
+    body: "বিজ্ঞাপনের জন্য যোগাযোগ করুন · দিনের শেষ খবর",
+    columnSpan: 2,
+    invert: true,
+  });
+  return cols;
+}
 
 export const SECTIONS = ["প্রচ্ছদ", "দেশ", "নগর", "বিশ্ব", "খেলা", "সংস্কৃতি", "মতামত", "বিজ্ঞাপন"];
 
