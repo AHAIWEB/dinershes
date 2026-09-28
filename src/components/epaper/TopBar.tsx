@@ -38,6 +38,7 @@ export function TopBar({ mode }: { mode: "public" | "admin" }) {
              আজকের পাতা
           </Link>
            <Link to="/archive" className="px-3 py-1.5 font-serif-bn text-xs text-newsprint-muted">আর্কাইভ</Link>
+           {mode === "admin" && <><Link to="/hub" className="px-2 py-1.5 font-serif-bn text-xs text-newsprint-muted">হাব</Link><Link to="/design" className="px-2 py-1.5 font-serif-bn text-xs text-newsprint-muted">ডিজাইন</Link></>}
          </nav>
       </div>
     </div>

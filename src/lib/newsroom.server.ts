@@ -55,7 +55,8 @@ export async function scrapeArticle(sourceUrl: string) {
         if (!v || typeof v !== "object") return;
         if (Array.isArray(v)) return v.forEach(walk);
         const o = v as Record<string, unknown>;
-        if (typeof o.articleBody === "string" && o.articleBody.length > ldBody.length) ldBody = o.articleBody;
+        const body = o["articleBody"];
+        if (typeof body === "string" && body.length > ldBody.length) ldBody = body;
         Object.values(o).forEach(walk);
       };
       walk(JSON.parse(node.textContent ?? ""));

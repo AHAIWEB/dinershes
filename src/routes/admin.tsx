@@ -23,6 +23,7 @@ import {
   initialEdition,
   newBlock,
   SECTIONS,
+  toDesign,
   type Block,
   type BlockType,
   type Edition,
@@ -99,6 +100,7 @@ function AdminStudio() {
           dateBn: saved.edition.date_bn,
           hijri: saved.edition.hijri_date,
           status: saved.edition.status as Edition["status"],
+          design: toDesign(saved.edition.design),
           pages: saved.pages.map((p) => ({
             id: p.id,
             no: p.page_number,

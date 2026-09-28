@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { addFeed, listFeeds, readFeed } from "@/lib/dashboard.functions";
+import { Link } from "@tanstack/react-router";
+import { addFeed, listFeeds, listSaved, readFeed } from "@/lib/dashboard.functions";
 
 type Feed = { id: string; url: string; name: string; region: string; active: boolean; last_status: string };
 type Item = { title: string; link: string; summary: string; image?: string; published?: string };
@@ -24,6 +25,8 @@ export function FeedPanel({
   const load = useServerFn(listFeeds);
   const read = useServerFn(readFeed);
   const add = useServerFn(addFeed);
+  const loadSaved = useServerFn(listSaved);
+  const [source, setSource] = useState<"feeds" | "saved">("feeds");
   const [feeds, setFeeds] = useState<Feed[]>([]);
   const [region, setRegion] = useState("জাতীয়");
   const [feedId, setFeedId] = useState("");
@@ -40,7 +43,14 @@ export function FeedPanel({
     if (!onAutoPlace) return;
     setBusy(true);
     setMsg("");
-    const active = feeds.filter((f) => f.region === region && f.active);
+    if (source === "saved") {
+      const saved = (await loadSaved().catch(() => [])).filter((s) => s.category === region).slice(0, autoCount);
+      setBusy(false);
+      if (!saved.length) return setMsg("এই ক্যাটাগরিতে সংরক্ষিত খবর নেই — স্ক্র্যাপার হাবে সংরক্ষণ করুন।");
+      onAutoPlace(saved.map((s) => ({ title: s.title, link: s.link, summary: s.summary, ...(s.image_url ? { image: s.image_url } : {}) })), autoPage, replace, pages[autoPage]?.section ?? REGION_SECTION[region] ?? "দেশ");
+      return;
+    }
+    const active = feeds.filter((f) => f.region === region && f.active && (f as Feed & { kind?: string }).kind !== "site");
     const results = await Promise.all(
       active.map((f) => read({ data: { id: f.id } }).catch(() => ({ items: [] as Item[], error: "" }))),
     );
@@ -84,7 +94,7 @@ export function FeedPanel({
 
   return (
     <section className="mb-5 rounded-md border border-newsprint-rule bg-newsprint-paper p-4">
-      <h2 className="font-serif-bn text-lg font-bold">সংবাদ সাইটের ফিড থেকে খবর</h2>
+      <div className="flex items-center justify-between gap-2"><h2 className="font-serif-bn text-lg font-bold">সংবাদ সাইটের ফিড থেকে খবর</h2><Link to="/hub" className="font-serif-bn text-xs underline">স্ক্র্যাপার হাব →</Link></div>
       <div className="mt-2 flex flex-wrap gap-1">
         {regions.map((r) => (
           <button
@@ -137,6 +147,10 @@ export function FeedPanel({
           <select aria-label="কোন পাতায়" value={autoPage} onChange={(e) => setAutoPage(Number(e.target.value))} className="border border-newsprint-rule bg-background px-2 py-1">
             {pages.map((p, i) => <option key={i} value={i}>পৃষ্ঠা {p.no} · {p.title}</option>)}
           </select>
+          <select aria-label="উৎস" value={source} onChange={(e) => setSource(e.target.value as "feeds" | "saved")} className="border border-newsprint-rule bg-background px-2 py-1">
+            <option value="feeds">“{region}” সক্রিয় ফিড</option>
+            <option value="saved">“{region}” সংরক্ষিত খবর</option>
+          </select>
           <label className="flex items-center gap-1">
             খবর সংখ্যা
             <input type="number" min={1} max={20} value={autoCount} onChange={(e) => setAutoCount(Math.max(1, Math.min(20, Number(e.target.value) || 1)))} className="w-14 border border-newsprint-rule bg-background px-1 py-1" />
@@ -146,7 +160,7 @@ export function FeedPanel({
             পুরনো খবর সরিয়ে নতুন
           </label>
           <button disabled={busy} onClick={autoFill} className="bg-newsprint-ink px-3 py-1 text-newsprint-paper disabled:opacity-50">
-            সক্রিয় ফিড থেকে পাতায় বসান
+            {source === "saved" ? "সংরক্ষিত খবর পাতায় বসান" : "সক্রিয় ফিড থেকে পাতায় বসান"}
           </button>
         </div>
       )}
