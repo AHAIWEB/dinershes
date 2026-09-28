@@ -90,6 +90,9 @@ function AdminStudio() {
       .then((saved) => {
         if (!mounted) return;
         if (!saved) {
+          // A fresh draft carries today's Dhaka date instead of the template's.
+          const today = new Intl.DateTimeFormat("bn-BD", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Dhaka" }).format(new Date());
+          setEdition((prev) => ({ ...prev, dateBn: today }));
           setLoaded(true);
           return;
         }
