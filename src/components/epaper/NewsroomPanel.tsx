@@ -164,7 +164,7 @@ export function NewsroomPanel({
                 placeholder="https://..."
                 className={input}
               />
-              <button onClick={importUrl} disabled={busy || !url} className={primary}>
+              <button onClick={() => importUrl()} disabled={busy || !url} className={primary}>
                 <Globe2 size={16} /> ফেচ করুন
               </button>
             </div>
