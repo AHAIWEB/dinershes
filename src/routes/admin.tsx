@@ -256,7 +256,7 @@ function AdminStudio() {
 
   /** Auto-layout: lead story spans 4 columns at top, the rest flow round-robin over the 6 columns. */
   const autoPlace = (
-    items: { title: string; link: string; summary: string; image?: string }[],
+    items: { title: string; link: string; summary: string; image?: string; body?: string }[],
     pageIndex: number,
     replace: boolean,
     section: string,
@@ -285,7 +285,7 @@ function AdminStudio() {
       }
       const art = newBlock("article");
       art.label = it.summary.slice(0, 120) || it.title;
-      art.body = `${it.summary || it.title}\n\nসূত্র: ${new URL(it.link).hostname.replace(/^www\./, "")}`;
+      art.body = `${it.body || it.summary || it.title}\n\nসূত্র: ${new URL(it.link).hostname.replace(/^www\./, "")}`;
       art.section = section;
       if (lead) art.columnSpan = 4;
       out.push(art);

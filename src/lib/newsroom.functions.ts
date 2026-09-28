@@ -128,3 +128,22 @@ export const approveArticle = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/** Opens each story link and returns its full text and lead image, so pages show the whole report. */
+export const fetchFullStories = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input) => z.object({ links: z.array(z.string().url()).max(20) }).parse(input))
+  .handler(async ({ data, context }) => {
+    await assertEditorial(context.supabase, context.userId);
+    const { scrapeArticle } = await import("./newsroom.server");
+    return Promise.all(
+      data.links.map(async (link) => {
+        try {
+          const a = await scrapeArticle(link);
+          return { link, body: a.text, image: a.image ?? null };
+        } catch {
+          return { link, body: "", image: null };
+        }
+      }),
+    );
+  });
