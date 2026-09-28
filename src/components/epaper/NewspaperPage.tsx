@@ -1,4 +1,4 @@
-import type { Block, Edition, Page } from "@/lib/epaper-data";
+import { designVars, type Block, type Edition, type Page } from "@/lib/epaper-data";
 import { BlockView } from "./BlockView";
 import logo from "@/assets/shesh-khobor-logo-cropped.png.asset.json";
 
@@ -22,7 +22,7 @@ export function NewspaperPage({
   onDragStartBlock,
 }: Props) {
   return (
-    <div className="newspaper-sheet bg-newsprint-paper px-[1.4%] py-[2%] text-newsprint-ink shadow-paper">
+    <div className="newspaper-sheet bg-newsprint-paper px-[1.4%] py-[2%] text-newsprint-ink shadow-paper" style={designVars(edition.design) as React.CSSProperties}>
       <header className="border-b-[3px] border-newsprint-ink pb-3">
         <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
           <div className="min-w-0">
@@ -47,6 +47,7 @@ export function NewspaperPage({
         {page.columns.map((col, ci) => (
           <div
             key={ci}
+            style={{ borderLeftWidth: "var(--d-rule, 1px)" }}
             className={`min-w-0 space-y-1 border-l border-newsprint-rule/60 pl-1 ${
               editable ? "min-h-40 outline-dashed outline-1 outline-newsprint-rule/70" : ""
             }`}

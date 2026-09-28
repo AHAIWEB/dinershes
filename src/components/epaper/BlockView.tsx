@@ -14,7 +14,7 @@ export function BlockView({ block }: { block: Block }) {
   };
 
   const kicker = (
-    <span className="block font-sans text-[0.55rem] uppercase tracking-[0.2em] text-newsprint-accent">
+    <span className="font-sans text-[0.55rem] uppercase tracking-[0.2em]" style={{ color: "var(--d-kicker, var(--accent))", display: "var(--d-kicker-display, block)" as React.CSSProperties["display"] }}>
       {block.section}
     </span>
   );
@@ -37,6 +37,7 @@ export function BlockView({ block }: { block: Block }) {
           className="w-full border border-newsprint-rule"
           style={{
             height: block.imageHeight,
+            aspectRatio: block.imageHeight ? undefined : "var(--d-ratio, auto)",
             objectFit: block.fit ?? "cover",
             borderRadius: block.radius,
           }}
@@ -84,7 +85,7 @@ export function BlockView({ block }: { block: Block }) {
     );
   }
 
-  const size = block.type === "headline" ? 1.45 : 1;
+  const size = block.type === "headline" ? "var(--d-headline, 1.45rem)" : "var(--d-title, 1rem)";
   const treatment = block.treatment ?? "standard";
   const treatmentClass = treatment === "banner"
     ? "border-y-[3px] border-newsprint-ink py-2"
@@ -98,17 +99,19 @@ export function BlockView({ block }: { block: Block }) {
       {kicker}
       <h3
         className="font-serif-bn font-bold leading-[1.15] text-newsprint-ink"
-        style={{ fontSize: `${size * (block.fontScale ?? 1)}rem` }}
+        style={{ fontSize: `calc(${size} * ${block.fontScale ?? 1})`, fontFamily: block.type === "headline" ? "var(--d-hfont, inherit)" : undefined }}
       >
         {block.label}
       </h3>
       {block.credit && (
-        <p className="mt-1 font-serif-bn text-[0.6rem] text-newsprint-muted">{block.credit}</p>
+        <p className="mt-1 font-serif-bn text-newsprint-muted" style={{ fontSize: "var(--d-sub, 0.6rem)" }}>{block.credit}</p>
       )}
       {block.body && (
         <div
-          className="mt-1 grid font-serif-bn text-[0.78rem] leading-[1.5] text-newsprint-body"
+          className="mt-1 grid font-serif-bn text-newsprint-body"
           style={{
+            fontSize: "var(--d-body, 0.78rem)",
+            lineHeight: "var(--d-lh, 1.5)",
             gridTemplateColumns: `repeat(${Math.max(1, block.columnSpan ?? 1)}, minmax(0, 1fr))`,
             columnGap: "var(--column-gap)",
           }}

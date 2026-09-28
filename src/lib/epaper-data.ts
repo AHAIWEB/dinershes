@@ -42,7 +42,50 @@ export type Edition = {
   hijri: string;
   status: "draft" | "review" | "approved" | "published";
   pages: Page[];
+  design?: PageDesign;
 };
+
+export type PageDesign = {
+  preset: string;
+  headline: number;
+  title: number;
+  subtitle: number;
+  body: number;
+  lineHeight: number;
+  imageRatio: "auto" | "16/9" | "4/3" | "3/2" | "1/1";
+  kicker: "accent" | "ink" | "hidden";
+  rules: boolean;
+  headlineFont: "serif" | "display";
+};
+
+export const DESIGN_PRESETS: Record<string, { name: string; design: PageDesign }> = {
+  classic: { name: "ক্লাসিক", design: { preset: "classic", headline: 1.45, title: 1, subtitle: 0.6, body: 0.78, lineHeight: 1.5, imageRatio: "auto", kicker: "accent", rules: true, headlineFont: "serif" } },
+  modern: { name: "আধুনিক", design: { preset: "modern", headline: 1.8, title: 1.1, subtitle: 0.7, body: 0.8, lineHeight: 1.6, imageRatio: "16/9", kicker: "ink", rules: false, headlineFont: "display" } },
+  dense: { name: "ঘন", design: { preset: "dense", headline: 1.25, title: 0.9, subtitle: 0.58, body: 0.7, lineHeight: 1.35, imageRatio: "4/3", kicker: "accent", rules: true, headlineFont: "serif" } },
+};
+
+/** Normalises stored design JSON, falling back to the classic house style. */
+export function toDesign(raw: unknown): PageDesign {
+  const base = DESIGN_PRESETS.classic!.design;
+  return raw && typeof raw === "object" && !Array.isArray(raw) ? { ...base, ...(raw as Partial<PageDesign>) } : base;
+}
+
+/** CSS variables that BlockView reads so every page follows one design. */
+export function designVars(d: PageDesign | undefined): Record<string, string> {
+  const x = d ?? DESIGN_PRESETS.classic!.design;
+  return {
+    "--d-headline": `${x.headline}rem`,
+    "--d-title": `${x.title}rem`,
+    "--d-sub": `${x.subtitle}rem`,
+    "--d-body": `${x.body}rem`,
+    "--d-lh": String(x.lineHeight),
+    "--d-ratio": x.imageRatio,
+    "--d-kicker": x.kicker === "ink" ? "var(--ink)" : "var(--accent)",
+    "--d-kicker-display": x.kicker === "hidden" ? "none" : "block",
+    "--d-rule": x.rules ? "1px" : "0px",
+    "--d-hfont": x.headlineFont === "display" ? "var(--font-display-bn, inherit)" : "inherit",
+  };
+}
 
 export type LayoutArticle = {
   id: string;
