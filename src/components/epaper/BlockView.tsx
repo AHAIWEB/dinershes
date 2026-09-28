@@ -14,7 +14,7 @@ export function BlockView({ block }: { block: Block }) {
   };
 
   const kicker = (
-    <span className="font-sans text-[0.55rem] uppercase tracking-[0.2em]" style={{ color: "var(--d-kicker, var(--accent))", display: "var(--d-kicker-display, block)" as React.CSSProperties["display"] }}>
+    <span className="font-sans text-[0.55rem] uppercase tracking-[0.2em]" style={{ color: "var(--d-kicker, var(--accent-red))", display: "var(--d-kicker-display, block)" as React.CSSProperties["display"] }}>
       {block.section}
     </span>
   );

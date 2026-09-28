@@ -80,7 +80,7 @@ export function designVars(d: PageDesign | undefined): Record<string, string> {
     "--d-body": `${x.body}rem`,
     "--d-lh": String(x.lineHeight),
     "--d-ratio": x.imageRatio,
-    "--d-kicker": x.kicker === "ink" ? "var(--ink)" : "var(--accent)",
+    "--d-kicker": x.kicker === "ink" ? "var(--ink)" : "var(--accent-red)",
     "--d-kicker-display": x.kicker === "hidden" ? "none" : "block",
     "--d-rule": x.rules ? "1px" : "0px",
     "--d-hfont": x.headlineFont === "display" ? "var(--font-display-bn, inherit)" : "inherit",
