@@ -66,13 +66,13 @@ export const DESIGN_PRESETS: Record<string, { name: string; design: PageDesign }
 
 /** Normalises stored design JSON, falling back to the classic house style. */
 export function toDesign(raw: unknown): PageDesign {
-  const base = DESIGN_PRESETS.classic!.design;
+  const base = DESIGN_PRESETS["classic"]!.design;
   return raw && typeof raw === "object" && !Array.isArray(raw) ? { ...base, ...(raw as Partial<PageDesign>) } : base;
 }
 
 /** CSS variables that BlockView reads so every page follows one design. */
 export function designVars(d: PageDesign | undefined): Record<string, string> {
-  const x = d ?? DESIGN_PRESETS.classic!.design;
+  const x = d ?? DESIGN_PRESETS["classic"]!.design;
   return {
     "--d-headline": `${x.headline}rem`,
     "--d-title": `${x.title}rem`,

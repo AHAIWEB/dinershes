@@ -185,7 +185,7 @@ export const addFeed = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await rolesOf(context.supabase, context.userId);
-    const { error } = await context.supabase.from("rss_feeds").insert(data);
+    const { error } = await context.supabase.from("rss_feeds").insert({ url: data.url, name: data.name, region: data.region, kind: data.kind ?? "feed" });
     if (error) throw new Error("ফিড যোগ করা যায়নি (আগেই থাকতে পারে)।");
     return { ok: true };
   });
@@ -204,8 +204,11 @@ export const updateFeed = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await rolesOf(context.supabase, context.userId);
-    const { id, ...rest } = data;
-    const { error } = await context.supabase.from("rss_feeds").update(rest).eq("id", id);
+    const rest: { name?: string; region?: string; active?: boolean } = {};
+    if (data.name !== undefined) rest.name = data.name;
+    if (data.region !== undefined) rest.region = data.region;
+    if (data.active !== undefined) rest.active = data.active;
+    const { error } = await context.supabase.from("rss_feeds").update(rest).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
