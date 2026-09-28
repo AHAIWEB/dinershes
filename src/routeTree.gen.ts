@@ -12,7 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as ArchiveRouteImport } from './routes/archive'
+import { Route as DesignRouteImport } from './routes/design'
 import { Route as DownloadsRouteImport } from './routes/downloads'
+import { Route as HubRouteImport } from './routes/hub'
 import { Route as IssueRouteImport } from './routes/issue'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as IssueEditionIdRouteImport } from './routes/issue.$editionId'
@@ -34,9 +36,19 @@ const ArchiveRoute = ArchiveRouteImport.update({
   path: '/archive',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DesignRoute = DesignRouteImport.update({
+  id: '/design',
+  path: '/design',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DownloadsRoute = DownloadsRouteImport.update({
   id: '/downloads',
   path: '/downloads',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HubRoute = HubRouteImport.update({
+  id: '/hub',
+  path: '/hub',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IssueRoute = IssueRouteImport.update({
@@ -69,7 +81,9 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/archive': typeof ArchiveRoute
+  '/design': typeof DesignRoute
   '/downloads': typeof DownloadsRoute
+  '/hub': typeof HubRoute
   '/issue': typeof IssueRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/issue/$editionId': typeof IssueEditionIdRoute
@@ -80,7 +94,9 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/archive': typeof ArchiveRoute
+  '/design': typeof DesignRoute
   '/downloads': typeof DownloadsRoute
+  '/hub': typeof HubRoute
   '/issue': typeof IssueIndexRoute
   '/reset-password': typeof ResetPasswordRoute
   '/issue/$editionId': typeof IssueEditionIdRoute
@@ -91,7 +107,9 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/archive': typeof ArchiveRoute
+  '/design': typeof DesignRoute
   '/downloads': typeof DownloadsRoute
+  '/hub': typeof HubRoute
   '/issue': typeof IssueRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/issue/$editionId': typeof IssueEditionIdRoute
@@ -104,7 +122,9 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/archive'
+    | '/design'
     | '/downloads'
+    | '/hub'
     | '/issue'
     | '/reset-password'
     | '/issue/$editionId'
@@ -115,7 +135,9 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/archive'
+    | '/design'
     | '/downloads'
+    | '/hub'
     | '/issue'
     | '/reset-password'
     | '/issue/$editionId'
@@ -125,7 +147,9 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/archive'
+    | '/design'
     | '/downloads'
+    | '/hub'
     | '/issue'
     | '/reset-password'
     | '/issue/$editionId'
@@ -137,7 +161,9 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   ArchiveRoute: typeof ArchiveRoute
+  DesignRoute: typeof DesignRoute
   DownloadsRoute: typeof DownloadsRoute
+  HubRoute: typeof HubRoute
   IssueRoute: typeof IssueRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
   PrintEditionIdRoute: typeof PrintEditionIdRoute
@@ -167,11 +193,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ArchiveRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/design': {
+      id: '/design'
+      path: '/design'
+      fullPath: '/design'
+      preLoaderRoute: typeof DesignRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/downloads': {
       id: '/downloads'
       path: '/downloads'
       fullPath: '/downloads'
       preLoaderRoute: typeof DownloadsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hub': {
+      id: '/hub'
+      path: '/hub'
+      fullPath: '/hub'
+      preLoaderRoute: typeof HubRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/issue': {
@@ -226,7 +266,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   ArchiveRoute: ArchiveRoute,
+  DesignRoute: DesignRoute,
   DownloadsRoute: DownloadsRoute,
+  HubRoute: HubRoute,
   IssueRoute: IssueRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
   PrintEditionIdRoute: PrintEditionIdRoute,
