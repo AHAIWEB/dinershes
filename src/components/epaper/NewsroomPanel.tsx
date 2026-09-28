@@ -45,14 +45,17 @@ export function NewsroomPanel({
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   useEffect(() => {
-    if (initialUrl) setUrl(initialUrl);
     if (initialSection) setSection(initialSection);
+    if (initialUrl) {
+      setUrl(initialUrl);
+      void importUrl(initialUrl);
+    }
   }, [initialUrl, initialSection]);
-  const importUrl = async () => {
+  async function importUrl(target: string = url) {
     setBusy(true);
-    setMessage("");
+    setMessage("পুরো প্রতিবেদন আনা হচ্ছে…");
     try {
-      const result = await fetchSource({ data: { url } });
+      const result = await fetchSource({ data: { url: target } });
       setSourceId(result.id);
       setSourceTitle(result.title);
       setSourceText(result.text);
@@ -63,7 +66,7 @@ export function NewsroomPanel({
     } finally {
       setBusy(false);
     }
-  };
+  }
   const makeDraft = async () => {
     setBusy(true);
     setMessage("");
@@ -161,7 +164,7 @@ export function NewsroomPanel({
                 placeholder="https://..."
                 className={input}
               />
-              <button onClick={importUrl} disabled={busy || !url} className={primary}>
+              <button onClick={() => importUrl()} disabled={busy || !url} className={primary}>
                 <Globe2 size={16} /> ফেচ করুন
               </button>
             </div>

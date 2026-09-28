@@ -1,0 +1,1 @@
+UPDATE public.editions SET date_bn = 'মঙ্গলবার, ২৯ সেপ্টেম্বর ২০২৬ · ১৪ আশ্বিন ১৪৩৩', publication_date = '2026-09-29' WHERE edition_number = '১৩' AND created_at > '2026-09-28';

@@ -2,9 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { addFeed, listFeeds, listSaved, readFeed } from "@/lib/dashboard.functions";
+import { fetchFullStories } from "@/lib/newsroom.functions";
 
 type Feed = { id: string; url: string; name: string; region: string; active: boolean; last_status: string };
-type Item = { title: string; link: string; summary: string; image?: string; published?: string };
+type Item = { title: string; link: string; summary: string; image?: string; published?: string; body?: string };
 
 const REGION_SECTION: Record<string, string> = {
   জাতীয়: "দেশ",
@@ -26,6 +27,17 @@ export function FeedPanel({
   const read = useServerFn(readFeed);
   const add = useServerFn(addFeed);
   const loadSaved = useServerFn(listSaved);
+  const full = useServerFn(fetchFullStories);
+  /** Adds the full report text (and a photo if the feed had none) to each item. */
+  const withFull = async (list: Item[]) => {
+    setMsg("পুরো প্রতিবেদন আনা হচ্ছে…");
+    const res = await full({ data: { links: list.map((i) => i.link) } }).catch(() => []);
+    setMsg("");
+    return list.map((it) => {
+      const r = res.find((x) => x.link === it.link);
+      return { ...it, ...(r?.body && r.body.length > it.summary.length ? { body: r.body } : {}), ...(!it.image && r?.image ? { image: r.image } : {}) };
+    });
+  };
   const [source, setSource] = useState<"feeds" | "saved">("feeds");
   const [feeds, setFeeds] = useState<Feed[]>([]);
   const [region, setRegion] = useState("জাতীয়");
@@ -45,9 +57,10 @@ export function FeedPanel({
     setMsg("");
     if (source === "saved") {
       const saved = (await loadSaved().catch(() => [])).filter((s) => s.category === region).slice(0, autoCount);
+      if (!saved.length) { setBusy(false); return setMsg("এই ক্যাটাগরিতে সংরক্ষিত খবর নেই — স্ক্র্যাপার হাবে সংরক্ষণ করুন।"); }
+      const enriched = await withFull(saved.map((s) => ({ title: s.title, link: s.link, summary: s.summary, ...(s.image_url ? { image: s.image_url } : {}) })));
       setBusy(false);
-      if (!saved.length) return setMsg("এই ক্যাটাগরিতে সংরক্ষিত খবর নেই — স্ক্র্যাপার হাবে সংরক্ষণ করুন।");
-      onAutoPlace(saved.map((s) => ({ title: s.title, link: s.link, summary: s.summary, ...(s.image_url ? { image: s.image_url } : {}) })), autoPage, replace, pages[autoPage]?.section ?? REGION_SECTION[region] ?? "দেশ");
+      onAutoPlace(enriched, autoPage, replace, pages[autoPage]?.section ?? REGION_SECTION[region] ?? "দেশ");
       return;
     }
     const active = feeds.filter((f) => f.region === region && f.active && (f as Feed & { kind?: string }).kind !== "site");
@@ -66,9 +79,10 @@ export function FeedPanel({
         }
       }
     }
+    if (!picked.length) { setBusy(false); return setMsg("সক্রিয় ফিড থেকে কোনো খবর পাওয়া যায়নি।"); }
+    const enriched = await withFull(picked);
     setBusy(false);
-    if (!picked.length) return setMsg("সক্রিয় ফিড থেকে কোনো খবর পাওয়া যায়নি।");
-    onAutoPlace(picked, autoPage, replace, pages[autoPage]?.section ?? REGION_SECTION[region] ?? "দেশ");
+    onAutoPlace(enriched, autoPage, replace, pages[autoPage]?.section ?? REGION_SECTION[region] ?? "দেশ");
     void refresh();
   };
 

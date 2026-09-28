@@ -90,6 +90,9 @@ function AdminStudio() {
       .then((saved) => {
         if (!mounted) return;
         if (!saved) {
+          // A fresh draft carries today's Dhaka date instead of the template's.
+          const today = new Intl.DateTimeFormat("bn-BD", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Dhaka" }).format(new Date());
+          setEdition((prev) => ({ ...prev, dateBn: today }));
           setLoaded(true);
           return;
         }
@@ -256,7 +259,7 @@ function AdminStudio() {
 
   /** Auto-layout: lead story spans 4 columns at top, the rest flow round-robin over the 6 columns. */
   const autoPlace = (
-    items: { title: string; link: string; summary: string; image?: string }[],
+    items: { title: string; link: string; summary: string; image?: string; body?: string }[],
     pageIndex: number,
     replace: boolean,
     section: string,
@@ -285,7 +288,7 @@ function AdminStudio() {
       }
       const art = newBlock("article");
       art.label = it.summary.slice(0, 120) || it.title;
-      art.body = `${it.summary || it.title}\n\nসূত্র: ${new URL(it.link).hostname.replace(/^www\./, "")}`;
+      art.body = `${it.body || it.summary || it.title}\n\nসূত্র: ${new URL(it.link).hostname.replace(/^www\./, "")}`;
       art.section = section;
       if (lead) art.columnSpan = 4;
       out.push(art);
