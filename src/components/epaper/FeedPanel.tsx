@@ -21,7 +21,7 @@ export function FeedPanel({
 }: {
   onPick: (url: string, section: string) => void;
   pages?: { no: number; title: string; section?: string }[];
-  onAutoPlace?: (items: Item[], pageIndex: number, replace: boolean, section: string) => void;
+  onAutoPlace?: (items: Item[], pageIndex: number, startColumn: number, replace: boolean, section: string) => void;
 }) {
   const load = useServerFn(listFeeds);
   const read = useServerFn(readFeed);
@@ -32,11 +32,12 @@ export function FeedPanel({
   const withFull = async (list: Item[]) => {
     setMsg("পুরো প্রতিবেদন আনা হচ্ছে…");
     const res = await full({ data: { links: list.map((i) => i.link) } }).catch(() => []);
-    setMsg("");
-    return list.map((it) => {
+    const complete = list.flatMap((it) => {
       const r = res.find((x) => x.link === it.link);
-      return { ...it, ...(r?.body && r.body.length > it.summary.length ? { body: r.body } : {}), ...(!it.image && r?.image ? { image: r.image } : {}) };
+      if (!r?.complete || !r.body.trim()) return [];
+      return [{ ...it, body: r.body, ...(!it.image && r.image ? { image: r.image } : {}) }];
     });
+    return { items: complete, skipped: list.length - complete.length };
   };
   const [source, setSource] = useState<"feeds" | "saved">("feeds");
   const [feeds, setFeeds] = useState<Feed[]>([]);
@@ -47,6 +48,7 @@ export function FeedPanel({
   const [busy, setBusy] = useState(false);
   const [newUrl, setNewUrl] = useState("");
   const [autoPage, setAutoPage] = useState(0);
+  const [startColumn, setStartColumn] = useState(0);
   const [autoCount, setAutoCount] = useState(6);
   const [replace, setReplace] = useState(true);
 
@@ -58,9 +60,11 @@ export function FeedPanel({
     if (source === "saved") {
       const saved = (await loadSaved().catch(() => [])).filter((s) => s.category === region).slice(0, autoCount);
       if (!saved.length) { setBusy(false); return setMsg("এই ক্যাটাগরিতে সংরক্ষিত খবর নেই — স্ক্র্যাপার হাবে সংরক্ষণ করুন।"); }
-      const enriched = await withFull(saved.map((s) => ({ title: s.title, link: s.link, summary: s.summary, ...(s.image_url ? { image: s.image_url } : {}) })));
+      const result = await withFull(saved.map((s) => ({ title: s.title, link: s.link, summary: s.summary, ...(s.image_url ? { image: s.image_url } : {}) })));
       setBusy(false);
-      onAutoPlace(enriched, autoPage, replace, pages[autoPage]?.section ?? REGION_SECTION[region] ?? "দেশ");
+      if (!result.items.length) return setMsg("পূর্ণ প্রতিবেদন পাওয়া যায়নি—কোনো সারাংশ পাতায় বসানো হয়নি।");
+      setMsg(result.skipped ? `${result.skipped}টি খবরের পূর্ণ প্রতিবেদন মেলেনি; সেগুলো বাদ দেওয়া হয়েছে।` : "পূর্ণ প্রতিবেদনগুলো পাতায় বসানো হয়েছে।");
+      onAutoPlace(result.items, autoPage, startColumn, replace, pages[autoPage]?.section ?? REGION_SECTION[region] ?? "দেশ");
       return;
     }
     const active = feeds.filter((f) => f.region === region && f.active && (f as Feed & { kind?: string }).kind !== "site");
@@ -80,9 +84,11 @@ export function FeedPanel({
       }
     }
     if (!picked.length) { setBusy(false); return setMsg("সক্রিয় ফিড থেকে কোনো খবর পাওয়া যায়নি।"); }
-    const enriched = await withFull(picked);
+    const result = await withFull(picked);
     setBusy(false);
-    onAutoPlace(enriched, autoPage, replace, pages[autoPage]?.section ?? REGION_SECTION[region] ?? "দেশ");
+    if (!result.items.length) return setMsg("পূর্ণ প্রতিবেদন পাওয়া যায়নি—কোনো সারাংশ পাতায় বসানো হয়নি।");
+    setMsg(result.skipped ? `${result.skipped}টি খবরের পূর্ণ প্রতিবেদন মেলেনি; সেগুলো বাদ দেওয়া হয়েছে।` : "পূর্ণ প্রতিবেদনগুলো পাতায় বসানো হয়েছে।");
+    onAutoPlace(result.items, autoPage, startColumn, replace, pages[autoPage]?.section ?? REGION_SECTION[region] ?? "দেশ");
     void refresh();
   };
 
@@ -160,6 +166,9 @@ export function FeedPanel({
           <span className="font-bold">স্বয়ংক্রিয় বিন্যাস:</span>
           <select aria-label="কোন পাতায়" value={autoPage} onChange={(e) => setAutoPage(Number(e.target.value))} className="border border-newsprint-rule bg-background px-2 py-1">
             {pages.map((p, i) => <option key={i} value={i}>পৃষ্ঠা {p.no} · {p.title}</option>)}
+          </select>
+          <select aria-label="কোন কলাম থেকে" value={startColumn} onChange={(e) => setStartColumn(Number(e.target.value))} className="border border-newsprint-rule bg-background px-2 py-1">
+            {Array.from({ length: 6 }, (_, i) => <option key={i} value={i}>কলাম {i + 1} থেকে</option>)}
           </select>
           <select aria-label="উৎস" value={source} onChange={(e) => setSource(e.target.value as "feeds" | "saved")} className="border border-newsprint-rule bg-background px-2 py-1">
             <option value="feeds">“{region}” সক্রিয় ফিড</option>
