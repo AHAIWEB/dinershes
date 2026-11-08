@@ -2,6 +2,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { streamText } from "ai";
 import { parseHTML } from "linkedom";
 import { createRunIdFetch } from "./gateway/run-id.ts";
+import { fullArticleBody } from "./newsroom-content";
 
 export type NewsroomMode = "full" | "brief" | "custom";
 
@@ -13,9 +14,13 @@ function safeUrl(value: string) {
   const url = new URL(value);
   if (
     !/^https?:$/.test(url.protocol) ||
+    url.username ||
+    url.password ||
+    (url.port && url.port !== "80" && url.port !== "443") ||
     blockedHosts.test(url.hostname) ||
     blockedPrivate172.test(url.hostname) ||
     /^\d+(?:\.\d+){3}$/.test(url.hostname) ||
+    /^(?:0x[\da-f]+|\d+)$/i.test(url.hostname) ||
     url.hostname.startsWith("[") ||
     !url.hostname.includes(".")
   ) {
@@ -30,6 +35,7 @@ export async function scrapeArticle(sourceUrl: string) {
   for (let i = 0; i < 4; i += 1) {
     response = await fetch(url, {
       redirect: "manual",
+      signal: AbortSignal.timeout(12_000),
       headers: { "User-Agent": "DinerSheshKhobor/1.0 (+newsroom article reader)" },
     });
     if (response.status >= 300 && response.status < 400) {
@@ -83,15 +89,9 @@ export async function scrapeArticle(sourceUrl: string) {
     document.querySelector('meta[property="og:description"]')?.getAttribute("content") ??
     document.querySelector('meta[name="description"]')?.getAttribute("content") ??
     "";
-  let text = [ldBody, best].sort((a, b) => b.length - a.length)[0] ?? "";
-  if (text.length < 120) {
-    const fallback = (document.querySelector("article") ?? document.querySelector("main") ?? document.body)?.textContent ?? "";
-    text = fallback.length > text.length ? fallback : text;
-  }
-  text = text.replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim();
-  if (text.length < 120 && description.length > 40) text = description.trim();
-  text = text.slice(0, 18_000);
-  if (text.length < 40) throw new Error("পাতা থেকে পর্যাপ্ত সংবাদ লেখা পাওয়া যায়নি। খবরের নির্দিষ্ট পাতার লিংক দিন (বিভাগের পাতা নয়)।");
+  const extracted = fullArticleBody(ldBody, best);
+  const text = extracted.body.slice(0, 18_000);
+  if (!extracted.complete) throw new Error("এই পাতায় পূর্ণ প্রতিবেদন পাওয়া যায়নি। নির্দিষ্ট খবরের লিংক দিন।");
   const title =
     document.querySelector('meta[property="og:title"]')?.getAttribute("content") ??
     document.querySelector("h1")?.textContent?.trim() ??
@@ -110,6 +110,7 @@ export async function scrapeArticle(sourceUrl: string) {
   return {
     title: title.trim().slice(0, 300),
     text,
+    complete: true,
     image: imageUrl,
     url: url.toString(),
     domain: url.hostname.replace(/^www\./, ""),
@@ -182,13 +183,14 @@ export type FeedItem = {
   published?: string;
 };
 
-/** Reads an RSS 2.0 or Atom feed through the same SSRF guard as article fetching. */
+/** Reads an RSS 2.0 or Atom feed using raw XML so Atom link elements remain intact. */
 export async function fetchFeed(feedUrl: string): Promise<FeedItem[]> {
   let url = safeUrl(feedUrl);
   let response: Response | undefined;
   for (let i = 0; i < 4; i += 1) {
     response = await fetch(url, {
       redirect: "manual",
+      signal: AbortSignal.timeout(12_000),
       headers: { "User-Agent": "DinerSheshKhobor/1.0 (+newsroom feed reader)" },
     });
     if (response.status >= 300 && response.status < 400) {
@@ -202,28 +204,44 @@ export async function fetchFeed(feedUrl: string): Promise<FeedItem[]> {
   if (!response?.ok) throw new Error("ফিডটি এখন সাড়া দিচ্ছে না।");
   const xml = (await response.text()).slice(0, 3_000_000);
   if (!/<(rss|feed|rdf)/i.test(xml)) throw new Error("এই ঠিকানায় RSS ফিড পাওয়া যায়নি।");
-  const { document } = parseHTML(`<root>${xml.replace(/<\?xml[^>]*>/, "")}</root>`);
-  const strip = (s: string) =>
-    s.replace(/<!\[CDATA\[|\]\]>/g, "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-  const nodes = [...document.querySelectorAll("item, entry")].slice(0, 25);
-  return nodes
+  const decodeXml = (value: string) => value
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
+    .replace(/&#(\d+);/g, (_, n: string) => String.fromCodePoint(Number(n)))
+    .replace(/&#x([\da-f]+);/gi, (_, n: string) => String.fromCodePoint(parseInt(n, 16)))
+    .replace(/&quot;/g, '"').replace(/&apos;|&#39;/g, "'")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+  const strip = (value: string) => decodeXml(value).replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  const tagText = (node: string, names: string[]) => {
+    for (const name of names) {
+      const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const found = new RegExp(`<${escaped}\\b[^>]*>([\\s\\S]*?)<\\/${escaped}\\s*>`, "i").exec(node);
+      if (found?.[1]) return found[1];
+    }
+    return "";
+  };
+  const entries = ["item", "entry"].flatMap((tag) => {
+    const expression = new RegExp(`<${tag}\\b[^>]*>[\\s\\S]*?<\\/${tag}\\s*>`, "gi");
+    return [...xml.matchAll(expression)].map((match) => match[0]);
+  }).slice(0, 25);
+  return entries
     .map((node) => {
-      const get = (sel: string) => node.querySelector(sel)?.textContent ?? "";
-      const linkEl = node.querySelector("link");
-      const link = strip(linkEl?.getAttribute("href") || linkEl?.textContent || get("guid"));
-      const rawDesc = get("description") || get("summary") || get("content");
-      const imgMatch = /<img[^>]+src=["']([^"']+)/i.exec(node.innerHTML);
-      const media =
-        node.querySelector("enclosure")?.getAttribute("url") ||
-        node.querySelector("media\\:content, content")?.getAttribute("url") ||
-        imgMatch?.[1];
+      const title = strip(tagText(node, ["title"])).slice(0, 300);
+      const linkTag = /<link\b([^>]*)>([\s\S]*?)<\/link\s*>|<link\b([^>]*)\/?\s*>/i.exec(node);
+      const href = /\bhref\s*=\s*(["'])(.*?)\1/i.exec(linkTag?.[1] ?? linkTag?.[3] ?? "")?.[2] ?? "";
+      const link = strip(href || linkTag?.[2] || tagText(node, ["guid"]));
+      const rawDesc = tagText(node, ["description", "summary", "content:encoded", "content"]);
+      const imageTag = /<(?:enclosure|media:content)\b([^>]*)\/?\s*>/i.exec(node);
+      const media = /\b(?:url|href)\s*=\s*(["'])(.*?)\1/i.exec(imageTag?.[1] ?? "")?.[2]
+        ?? /<img\b[^>]*\bsrc\s*=\s*(["'])(.*?)\1/i.exec(node)?.[2];
+      const image = media ? decodeXml(media.trim()) : "";
+      const published = strip(tagText(node, ["pubDate", "published", "updated"]));
       return {
-        title: strip(get("title")).slice(0, 300),
+        title,
         link,
         summary: strip(rawDesc).slice(0, 600),
-        ...(media && media.startsWith("https://") ? { image: media } : {}),
-        ...(get("pubDate") || get("published") ? { published: strip(get("pubDate") || get("published")) } : {}),
+        ...(image.startsWith("https://") ? { image } : {}),
+        ...(published ? { published } : {}),
       };
     })
-    .filter((i) => i.title && /^https?:\/\//.test(i.link));
+    .filter((item) => item.title && /^https?:\/\//.test(item.link));
 }
