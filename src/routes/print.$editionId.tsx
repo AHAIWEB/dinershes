@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { PrintSheet } from "@/components/epaper/PrintSheet";
 import { TopBar } from "@/components/epaper/TopBar";
 import { getPublishedEdition } from "@/lib/editions.functions";
@@ -30,7 +30,8 @@ export const Route = createFileRoute("/print/$editionId")({
 });
 
 function PrintPage() {
-  const edition = toEdition(Route.useLoaderData());
+  const loaderData = Route.useLoaderData();
+  const edition = useMemo(() => toEdition(loaderData), [loaderData]);
   const refs = useRef<(HTMLDivElement | null)[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [columnFills, setColumnFills] = useState<number[][]>([]);

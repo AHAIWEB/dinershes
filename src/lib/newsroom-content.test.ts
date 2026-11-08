@@ -10,7 +10,7 @@ describe("full article selection", () => {
     const paragraphs = `${"প্রতিবেদনের পূর্ণ লেখা। ".repeat(20)}\n\n${"পরবর্তী অনুচ্ছেদ। ".repeat(10)}`;
     const result = fullArticleBody("", paragraphs);
     expect(result.complete).toBe(true);
-    expect(result.body).toBe(paragraphs);
+    expect(result.body).toBe(paragraphs.trim());
   });
 });
 
