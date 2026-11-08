@@ -29,6 +29,7 @@ import {
   type Edition,
   type Page,
 } from "@/lib/epaper-data";
+import { clampColumnSpan } from "@/lib/newsroom-content";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -75,7 +76,7 @@ function AdminStudio() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [tab, setTab] = useState<"বিষয়বস্তু" | "বিন্যাস" | "সেটিংস">("বিষয়বস্তু");
   const [zoom, setZoom] = useState(72);
-  const [nav, setNav] = useState("পৃষ্ঠা ডিজাইন");
+  const [nav, setNav] = useState("ড্যাশবোর্ড");
   const [dragging, setDragging] = useState<
     { kind: "new"; type: BlockType } | { kind: "move"; id: string } | null
   >(null);
@@ -261,6 +262,7 @@ function AdminStudio() {
   const autoPlace = (
     items: { title: string; link: string; summary: string; image?: string; body?: string }[],
     pageIndex: number,
+    startColumn: number,
     replace: boolean,
     section: string,
   ) => {
@@ -270,31 +272,30 @@ function AdminStudio() {
     }
     const cols: Block[][] = replace ? Array.from({ length: 6 }, () => []) : target.columns.map((c) => [...c]);
     items.forEach((it, idx) => {
+      if (!it.body?.trim()) return;
       const lead = idx === 0;
-      const ci = (idx - 1) % 6;
-      const col = ci;
+      const col = (startColumn + idx) % 6;
+      const span = clampColumnSpan(col, lead ? 4 : 1);
       const headline = newBlock("headline");
       headline.label = it.title;
       headline.section = section;
-      if (lead) headline.columnSpan = 4;
+      if (lead) headline.columnSpan = span;
       const out: Block[] = [headline];
       if (it.image && (lead || idx < 4)) {
         const img = newBlock("image");
         img.imageSrc = it.image;
         img.label = it.title;
         img.section = section;
-        if (lead) img.columnSpan = 4;
+        if (lead) img.columnSpan = span;
         out.push(img);
       }
       const art = newBlock("article");
       art.label = it.summary.slice(0, 120) || it.title;
-      art.body = `${it.body || it.summary || it.title}\n\nসূত্র: ${new URL(it.link).hostname.replace(/^www\./, "")}`;
+      art.body = `${it.body}\n\nসূত্র: ${new URL(it.link).hostname.replace(/^www\./, "")}`;
       art.section = section;
-      if (lead) art.columnSpan = 4;
+      if (lead) art.columnSpan = span;
       out.push(art);
-      // Lead occupies columns 1-4; place remaining stories in columns 5-6 first, then below.
-      const dest = lead ? 0 : idx <= 2 ? 3 + idx : col;
-      cols[Math.min(5, dest)]!.push(...out);
+      cols[col]?.push(...out);
     });
     setEdition((prev) => ({ ...prev, pages: prev.pages.map((p, i) => (i === pageIndex ? { ...p, columns: cols } : p)) }));
     switchPage(pageIndex);
@@ -464,6 +465,8 @@ function AdminStudio() {
         <main className="min-w-0 flex-1 px-4 py-5">
           {nav === "ড্যাশবোর্ড" ? (
             <DashboardPanel
+              onOpenNewsroom={() => setNav("AI নিউজরুম")}
+              onOpenDesign={() => setNav("পৃষ্ঠা ডিজাইন")}
               onUseAd={(ad) => {
                 const block = newBlock("ad");
                 block.label = ad.title;
@@ -482,7 +485,7 @@ function AdminStudio() {
             <>
             <FeedPanel onPick={(url, section) => setPick({ url, section })} pages={edition.pages.map((p) => ({ no: p.no, title: p.title, section: p.title }))} onAutoPlace={autoPlace} />
             <div className="mb-3 flex flex-wrap items-center gap-2 border-b border-newsprint-rule bg-newsprint-paper p-3 font-serif-bn text-sm">
-              <span>খবর বসবে</span>
+              <span className="font-bold">খবর বসবে</span>
               <select aria-label="খবরের পাতা" value={placementPage} onChange={(e) => setPlacementPage(Number(e.target.value))} className={inputCls}>
                 {edition.pages.map((p, i) => <option key={p.id} value={i}>পৃষ্ঠা {p.no} · {p.title}</option>)}
               </select>
