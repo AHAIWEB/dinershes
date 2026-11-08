@@ -20,6 +20,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as IssueEditionIdRouteImport } from './routes/issue.$editionId'
 import { Route as IssueIndexRouteImport } from './routes/issue_.index'
 import { Route as PrintEditionIdRouteImport } from './routes/print.$editionId'
+import { Route as ApiPublicFeedSyncRouteImport } from './routes/api/public/feed-sync'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -76,6 +77,11 @@ const PrintEditionIdRoute = PrintEditionIdRouteImport.update({
   path: '/print/$editionId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicFeedSyncRoute = ApiPublicFeedSyncRouteImport.update({
+  id: '/api/public/feed-sync',
+  path: '/api/public/feed-sync',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -89,6 +95,7 @@ export interface FileRoutesByFullPath {
   '/issue/$editionId': typeof IssueEditionIdRoute
   '/print/$editionId': typeof PrintEditionIdRoute
   '/issue/': typeof IssueIndexRoute
+  '/api/public/feed-sync': typeof ApiPublicFeedSyncRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -101,6 +108,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/issue/$editionId': typeof IssueEditionIdRoute
   '/print/$editionId': typeof PrintEditionIdRoute
+  '/api/public/feed-sync': typeof ApiPublicFeedSyncRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -115,6 +123,7 @@ export interface FileRoutesById {
   '/issue/$editionId': typeof IssueEditionIdRoute
   '/print/$editionId': typeof PrintEditionIdRoute
   '/issue_/': typeof IssueIndexRoute
+  '/api/public/feed-sync': typeof ApiPublicFeedSyncRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -130,6 +139,7 @@ export interface FileRouteTypes {
     | '/issue/$editionId'
     | '/print/$editionId'
     | '/issue/'
+    | '/api/public/feed-sync'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -142,6 +152,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/issue/$editionId'
     | '/print/$editionId'
+    | '/api/public/feed-sync'
   id:
     | '__root__'
     | '/'
@@ -155,6 +166,7 @@ export interface FileRouteTypes {
     | '/issue/$editionId'
     | '/print/$editionId'
     | '/issue_/'
+    | '/api/public/feed-sync'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -168,6 +180,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   PrintEditionIdRoute: typeof PrintEditionIdRoute
   IssueIndexRoute: typeof IssueIndexRoute
+  ApiPublicFeedSyncRoute: typeof ApiPublicFeedSyncRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -249,6 +262,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrintEditionIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/feed-sync': {
+      id: '/api/public/feed-sync'
+      path: '/api/public/feed-sync'
+      fullPath: '/api/public/feed-sync'
+      preLoaderRoute: typeof ApiPublicFeedSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -273,6 +293,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   PrintEditionIdRoute: PrintEditionIdRoute,
   IssueIndexRoute: IssueIndexRoute,
+  ApiPublicFeedSyncRoute: ApiPublicFeedSyncRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

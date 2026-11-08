@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { PrintSheet } from "@/components/epaper/PrintSheet";
 import { TopBar } from "@/components/epaper/TopBar";
 import { getPublishedEdition } from "@/lib/editions.functions";
 import { toEdition } from "@/lib/edition-map";
 import { downloadPdf, downloadPng } from "@/lib/print-files";
+import { columnFillPercent } from "@/lib/print-columns";
 
 export const Route = createFileRoute("/print/$editionId")({
   head: () => ({
@@ -29,10 +30,45 @@ export const Route = createFileRoute("/print/$editionId")({
 });
 
 function PrintPage() {
-  const edition = toEdition(Route.useLoaderData());
+  const loaderData = Route.useLoaderData();
+  const edition = useMemo(() => toEdition(loaderData), [loaderData]);
   const refs = useRef<(HTMLDivElement | null)[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
+  const [columnFills, setColumnFills] = useState<number[][]>([]);
   const base = `dinersheshkhobor-${edition.number}`;
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      const measurements = edition.pages.map((_, pageIndex) => {
+        const sheet = refs.current[pageIndex];
+        const grid = sheet?.querySelector<HTMLElement>("[data-newspaper-grid]");
+        if (!grid) return Array.from({ length: 6 }, () => 0);
+        const availableHeight = grid.clientHeight;
+        const columnGap = getComputedStyle(grid).getPropertyValue("--column-gap");
+        return Array.from({ length: 6 }, (_, columnIndex) => {
+          const column = grid.querySelector<HTMLElement>(`[data-paper-column="${columnIndex}"]`);
+          if (!column || !availableHeight) return 0;
+          const measure = column.cloneNode(true) as HTMLElement;
+          measure.style.setProperty("--column-gap", columnGap);
+          measure.style.position = "fixed";
+          measure.style.left = "-10000px";
+          measure.style.top = "0";
+          measure.style.width = `${column.offsetWidth}px`;
+          measure.style.height = "max-content";
+          measure.style.minHeight = "0";
+          measure.style.maxHeight = "none";
+          measure.style.overflow = "visible";
+          measure.style.alignSelf = "start";
+          document.body.append(measure);
+          const contentHeight = measure.scrollHeight;
+          measure.remove();
+          return columnFillPercent(contentHeight, availableHeight);
+        });
+      });
+      setColumnFills(measurements);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [edition]);
 
   const run = async (key: string, job: () => Promise<void>) => {
     setBusy(key);
@@ -109,6 +145,35 @@ function PrintPage() {
                   edition={edition}
                   page={page}
                 />
+              </div>
+            </div>
+            <div className="no-print mt-3 border-t border-newsprint-rule pt-3">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <h2 className="font-serif-bn text-sm font-bold">পাতা {page.no} · ছয় কলামের ভরাট</h2>
+                <p className="font-serif-bn text-xs text-newsprint-muted">প্রতিটি কলামের লেখা মুদ্রণযোগ্য জায়গার তুলনায়</p>
+              </div>
+              <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3 lg:grid-cols-6">
+                {Array.from({ length: 6 }, (_, columnIndex) => {
+                  const fill = columnFills[i]?.[columnIndex] ?? 0;
+                  return (
+                    <div key={columnIndex} className="min-w-0">
+                      <div className="mb-1 flex justify-between gap-2 font-serif-bn text-xs">
+                        <span>কলাম {columnIndex + 1}</span>
+                        <span>{fill}%</span>
+                      </div>
+                      <div
+                        role="progressbar"
+                        aria-label={`কলাম ${columnIndex + 1} ভরাট`}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-valuenow={fill}
+                        className="h-2 overflow-hidden bg-newsprint-tint"
+                      >
+                        <div className="h-full bg-newsprint-accent transition-[width]" style={{ width: `${fill}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </section>

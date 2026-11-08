@@ -140,9 +140,9 @@ export const fetchFullStories = createServerFn({ method: "POST" })
       data.links.map(async (link) => {
         try {
           const a = await scrapeArticle(link);
-          return { link, body: a.text, image: a.image ?? null };
+        return { link, body: a.text, image: a.image ?? null, complete: a.complete };
         } catch {
-          return { link, body: "", image: null };
+        return { link, body: "", image: null, complete: false };
         }
       }),
     );

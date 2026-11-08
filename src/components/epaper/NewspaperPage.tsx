@@ -43,10 +43,11 @@ export function NewspaperPage({
         </div>
       </header>
 
-      <div className="newsprint-grid mt-4 grid grid-cols-6 gap-y-3">
+      <div data-newspaper-grid="true" className="newsprint-grid mt-4 grid grid-cols-6 gap-y-3">
         {page.columns.map((col, ci) => (
           <div
             key={ci}
+            data-paper-column={ci}
             style={{ borderLeftWidth: "var(--d-rule, 1px)" }}
             className={`min-w-0 space-y-1 border-l border-newsprint-rule/60 pl-1 ${
               editable ? "min-h-40 outline-dashed outline-1 outline-newsprint-rule/70" : ""

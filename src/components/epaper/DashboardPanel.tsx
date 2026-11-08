@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+import { LayoutGrid, Newspaper } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   deleteAd,
   deleteArticle,
@@ -29,7 +31,15 @@ const ROLE_BN = { admin: "অ্যাডমিন", editor: "সম্পাদ
 const card = "rounded-md border border-newsprint-rule bg-newsprint-paper p-4";
 const btn = "border border-newsprint-ink px-2 py-1 font-serif-bn text-xs disabled:opacity-40";
 
-export function DashboardPanel({ onUseAd }: { onUseAd: (ad: Dash["ads"][number]) => void }) {
+export function DashboardPanel({
+  onUseAd,
+  onOpenNewsroom,
+  onOpenDesign,
+}: {
+  onUseAd: (ad: Dash["ads"][number]) => void;
+  onOpenNewsroom: () => void;
+  onOpenDesign: () => void;
+}) {
   const fetchDash = useServerFn(getDashboard);
   const fetchTeam = useServerFn(listTeam);
   const workflow = useServerFn(runEditorialWorkflow);
@@ -80,6 +90,21 @@ export function DashboardPanel({ onUseAd }: { onUseAd: (ad: Dash["ads"][number])
   return (
     <div className="space-y-5">
       {msg && <p className="rounded bg-newsprint-tint px-3 py-2 font-serif-bn text-sm">{msg}</p>}
+      <section className="flex flex-wrap items-center justify-between gap-4 border-b-2 border-newsprint-ink pb-4">
+        <div>
+          <p className="font-serif-bn text-xs text-newsprint-accent">সম্পাদকীয় ডেস্ক</p>
+          <h1 className="font-serif-bn text-2xl font-bold">আজকের সংস্করণ সাজান</h1>
+          <p className="font-serif-bn text-sm text-newsprint-muted">খবরের লিংক দিন, পাতা ও কলাম বেছে বিন্যাস করুন।</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={onOpenNewsroom} className="gap-2 bg-newsprint-accent font-serif-bn text-newsprint-paper hover:bg-newsprint-accent/90">
+            <Newspaper size={16} /> খবর আনুন ও সাজান
+          </Button>
+          <Button variant="outline" onClick={onOpenDesign} className="gap-2 font-serif-bn">
+            <LayoutGrid size={16} /> পৃষ্ঠা নকশা
+          </Button>
+        </div>
+      </section>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {counts.map((c) => (
           <div key={c.s} className={card}>
