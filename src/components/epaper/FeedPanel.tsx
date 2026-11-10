@@ -18,17 +18,13 @@ export function FeedPanel({
   onPick,
   pages = [],
   pageIndex,
-  onPageChange,
   startColumn,
-  onStartColumnChange,
   onAutoPlace,
 }: {
   onPick: (url: string, section: string) => void;
   pages?: { no: number; title: string; section?: string }[];
   pageIndex: number;
-  onPageChange: (index: number) => void;
   startColumn: number;
-  onStartColumnChange: (index: number) => void;
   onAutoPlace?: (items: Item[], pageIndex: number, startColumn: number, replace: boolean, section: string) => void;
 }) {
   const load = useServerFn(listFeeds);

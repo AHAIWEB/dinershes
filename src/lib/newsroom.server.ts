@@ -2,7 +2,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { streamText } from "ai";
 import { parseHTML } from "linkedom";
 import { createRunIdFetch } from "./gateway/run-id.ts";
-import { fullArticleBody } from "./newsroom-content";
+import { fullArticleBody, parseFeedXml } from "./newsroom-content";
 
 export type NewsroomMode = "full" | "brief" | "custom";
 
@@ -203,45 +203,5 @@ export async function fetchFeed(feedUrl: string): Promise<FeedItem[]> {
   }
   if (!response?.ok) throw new Error("ফিডটি এখন সাড়া দিচ্ছে না।");
   const xml = (await response.text()).slice(0, 3_000_000);
-  if (!/<(rss|feed|rdf)/i.test(xml)) throw new Error("এই ঠিকানায় RSS ফিড পাওয়া যায়নি।");
-  const decodeXml = (value: string) => value
-    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
-    .replace(/&#(\d+);/g, (_, n: string) => String.fromCodePoint(Number(n)))
-    .replace(/&#x([\da-f]+);/gi, (_, n: string) => String.fromCodePoint(parseInt(n, 16)))
-    .replace(/&quot;/g, '"').replace(/&apos;|&#39;/g, "'")
-    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
-  const strip = (value: string) => decodeXml(value).replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
-  const tagText = (node: string, names: string[]) => {
-    for (const name of names) {
-      const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const found = new RegExp(`<${escaped}\\b[^>]*>([\\s\\S]*?)<\\/${escaped}\\s*>`, "i").exec(node);
-      if (found?.[1]) return found[1];
-    }
-    return "";
-  };
-  const entries = ["item", "entry"].flatMap((tag) => {
-    const expression = new RegExp(`<${tag}\\b[^>]*>[\\s\\S]*?<\\/${tag}\\s*>`, "gi");
-    return [...xml.matchAll(expression)].map((match) => match[0]);
-  }).slice(0, 25);
-  return entries
-    .map((node) => {
-      const title = strip(tagText(node, ["title"])).slice(0, 300);
-      const linkTag = /<link\b([^>]*)>([\s\S]*?)<\/link\s*>|<link\b([^>]*)\/?\s*>/i.exec(node);
-      const href = /\bhref\s*=\s*(["'])(.*?)\1/i.exec(linkTag?.[1] ?? linkTag?.[3] ?? "")?.[2] ?? "";
-      const link = strip(href || linkTag?.[2] || tagText(node, ["guid"]));
-      const rawDesc = tagText(node, ["description", "summary", "content:encoded", "content"]);
-      const imageTag = /<(?:enclosure|media:content)\b([^>]*)\/?\s*>/i.exec(node);
-      const media = /\b(?:url|href)\s*=\s*(["'])(.*?)\1/i.exec(imageTag?.[1] ?? "")?.[2]
-        ?? /<img\b[^>]*\bsrc\s*=\s*(["'])(.*?)\1/i.exec(node)?.[2];
-      const image = media ? decodeXml(media.trim()) : "";
-      const published = strip(tagText(node, ["pubDate", "published", "updated"]));
-      return {
-        title,
-        link,
-        summary: strip(rawDesc).slice(0, 600),
-        ...(image.startsWith("https://") ? { image } : {}),
-        ...(published ? { published } : {}),
-      };
-    })
-    .filter((item) => item.title && /^https?:\/\//.test(item.link));
+  return parseFeedXml(xml);
 }

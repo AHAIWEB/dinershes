@@ -502,9 +502,7 @@ function AdminStudio() {
               onPick={(url, section) => setPick({ url, section })}
               pages={edition.pages.map((p) => ({ no: p.no, title: p.title, section: p.title }))}
               pageIndex={placementPage}
-              onPageChange={setPlacementPage}
               startColumn={placementColumn}
-              onStartColumnChange={setPlacementColumn}
               onAutoPlace={autoPlace}
             />
             <NewsroomPanel

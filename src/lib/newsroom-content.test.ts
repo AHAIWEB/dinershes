@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { clampColumnSpan, fullArticleBody } from "./newsroom-content";
+import { clampColumnSpan, fullArticleBody, parseFeedXml } from "./newsroom-content";
 
 describe("full article selection", () => {
   it("does not accept a short feed summary as a full report", () => {
@@ -11,6 +11,17 @@ describe("full article selection", () => {
     const result = fullArticleBody("", paragraphs);
     expect(result.complete).toBe(true);
     expect(result.body).toBe(paragraphs.trim());
+  });
+});
+
+describe("RSS and Atom parsing", () => {
+  it("keeps Atom link hrefs and RSS CDATA content", () => {
+    const xml = `<feed><entry><title>Atom story</title><link rel="alternate" href="https://news.example/story"/><summary>Feed summary</summary></entry></feed><rss><channel><item><title>RSS story</title><link>https://news.example/rss</link><description><![CDATA[<p>RSS summary</p>]]></description></item></channel></rss>`;
+    const stories = parseFeedXml(xml);
+    expect(stories.map((story) => story.link)).toEqual([
+      "https://news.example/rss",
+      "https://news.example/story",
+    ]);
   });
 });
 
