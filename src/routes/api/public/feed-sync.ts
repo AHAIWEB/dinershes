@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
+import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
 
 const json = (payload: unknown, status = 200) =>
@@ -8,12 +9,26 @@ const json = (payload: unknown, status = 200) =>
 export const Route = createFileRoute("/api/public/feed-sync")({
   server: {
     handlers: {
+      GET: async () => {
+        const url = process.env["SUPABASE_URL"];
+        const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
+        if (!url || !key) return json({ error: "সংযোগের তথ্য এখন প্রস্তুত নয়।" }, 503);
+        return json({ authUrl: url, publishableKey: key });
+      },
       POST: async ({ request }) => {
         const authorization = request.headers.get("authorization") ?? "";
         const token = /^Bearer ([\w.-]+)$/.exec(authorization)?.[1];
         if (!token || token.length > 8192) return json({ error: "সম্পাদকীয় সাইন-ইন দরকার।" }, 401);
         if (Number(request.headers.get("content-length") ?? 0) > 1024) {
           return json({ error: "অনুরোধটি গ্রহণ করা যায়নি।" }, 413);
+        }
+        let input: { maxItemsPerFeed: number };
+        try {
+          const raw = await request.text();
+          if (raw.length > 1024) return json({ error: "অনুরোধটি গ্রহণ করা যায়নি।" }, 413);
+          input = z.object({ maxItemsPerFeed: z.number().int().min(1).max(10) }).parse(JSON.parse(raw));
+        } catch {
+          return json({ error: "খবরের সংখ্যা ১ থেকে ১০-এর মধ্যে দিন।" }, 400);
         }
 
         const url = process.env["SUPABASE_URL"];
@@ -67,7 +82,7 @@ export const Route = createFileRoute("/api/public/feed-sync")({
             const feed = feeds?.[index];
             if (!feed) continue;
             try {
-              const items = (await fetchFeed(feed.url)).slice(0, 10);
+              const items = (await fetchFeed(feed.url)).slice(0, input.maxItemsPerFeed);
               if (items.length) {
                 const rows = items
                   .filter((item) => item.title.trim() && /^https?:\/\//.test(item.link))

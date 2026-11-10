@@ -274,8 +274,14 @@ function AdminStudio() {
     items.forEach((it, idx) => {
       if (!it.body?.trim()) return;
       const lead = idx === 0;
-      const col = (startColumn + idx) % 6;
-      const span = clampColumnSpan(col, lead ? 4 : 1);
+      const leadSpan = clampColumnSpan(startColumn, 4);
+      const remainingColumns = 6 - startColumn - leadSpan;
+      const col = lead
+        ? startColumn
+        : idx <= remainingColumns
+          ? startColumn + leadSpan + idx - 1
+          : startColumn;
+      const span = lead ? leadSpan : 1;
       const headline = newBlock("headline");
       headline.label = it.title;
       headline.section = section;
@@ -483,7 +489,6 @@ function AdminStudio() {
             />
           ) : nav === "AI নিউজরুম" ? (
             <>
-            <FeedPanel onPick={(url, section) => setPick({ url, section })} pages={edition.pages.map((p) => ({ no: p.no, title: p.title, section: p.title }))} onAutoPlace={autoPlace} />
             <div className="mb-3 flex flex-wrap items-center gap-2 border-b border-newsprint-rule bg-newsprint-paper p-3 font-serif-bn text-sm">
               <span className="font-bold">খবর বসবে</span>
               <select aria-label="খবরের পাতা" value={placementPage} onChange={(e) => setPlacementPage(Number(e.target.value))} className={inputCls}>
@@ -493,6 +498,15 @@ function AdminStudio() {
                 {Array.from({ length: 6 }, (_, i) => <option key={i} value={i}>কলাম {i + 1}</option>)}
               </select>
             </div>
+            <FeedPanel
+              onPick={(url, section) => setPick({ url, section })}
+              pages={edition.pages.map((p) => ({ no: p.no, title: p.title, section: p.title }))}
+              pageIndex={placementPage}
+              onPageChange={setPlacementPage}
+              startColumn={placementColumn}
+              onStartColumnChange={setPlacementColumn}
+              onAutoPlace={autoPlace}
+            />
             <NewsroomPanel
               {...(pick ? { initialUrl: pick.url, initialSection: pick.section } : {})}
               onPlace={placeStory}
@@ -651,14 +665,6 @@ function AdminStudio() {
                      <Field label="পৃষ্ঠার শিরোনাম">
                        <input value={page.title} disabled={pageLocked} onChange={(e) => setEdition((prev) => ({ ...prev, pages: prev.pages.map((p, i) => i === pageIndex ? { ...p, title: e.target.value } : p) }))} className={inputCls} />
                      </Field>
-                     <p className="mt-3 border-t border-newsprint-rule pt-2 font-serif-bn text-xs font-bold">এই পাতার অংশ</p>
-                     <div className="mt-1 max-h-36 space-y-1 overflow-y-auto">
-                       {page.columns.flatMap((col, ci) => col.map((block) => (
-                         <Button key={block.id} variant="ghost" onClick={() => setSelectedId(block.id)} className={`h-auto w-full justify-start whitespace-normal text-left font-serif-bn text-xs ${selectedId === block.id ? "bg-newsprint-tint text-newsprint-accent" : ""}`}>
-                           {ci + 1} · {block.label.slice(0, 40)}
-                         </Button>
-                       )))}
-                     </div>
                     <p className="font-serif-bn text-[0.62rem] text-newsprint-muted">
                       {selected
                         ? `${selected.label} · ${selected.section}`

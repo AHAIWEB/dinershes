@@ -44,26 +44,40 @@ function PrintPage() {
         const grid = sheet?.querySelector<HTMLElement>("[data-newspaper-grid]");
         if (!grid) return Array.from({ length: 6 }, () => 0);
         const availableHeight = grid.clientHeight;
-        const columnGap = getComputedStyle(grid).getPropertyValue("--column-gap");
-        return Array.from({ length: 6 }, (_, columnIndex) => {
-          const column = grid.querySelector<HTMLElement>(`[data-paper-column="${columnIndex}"]`);
-          if (!column || !availableHeight) return 0;
-          const measure = column.cloneNode(true) as HTMLElement;
-          measure.style.setProperty("--column-gap", columnGap);
-          measure.style.position = "fixed";
-          measure.style.left = "-10000px";
-          measure.style.top = "0";
-          measure.style.width = `${column.offsetWidth}px`;
-          measure.style.height = "max-content";
-          measure.style.minHeight = "0";
-          measure.style.maxHeight = "none";
-          measure.style.overflow = "visible";
-          measure.style.alignSelf = "start";
-          document.body.append(measure);
-          const contentHeight = measure.scrollHeight;
-          measure.remove();
-          return columnFillPercent(contentHeight, availableHeight);
+        const columns = Array.from({ length: 6 }, (_, index) =>
+          grid.querySelector<HTMLElement>(`[data-paper-column="${index}"]`),
+        );
+        const heights = Array.from({ length: 6 }, () => 0);
+        const sheetStyle = getComputedStyle(sheet);
+        const gap = Number.parseFloat(getComputedStyle(grid).rowGap) || 0;
+        ["--d-headline", "--d-title", "--d-sub", "--d-body", "--d-lh", "--d-ratio", "--d-kicker", "--d-kicker-display", "--d-rule", "--d-hfont", "--column-gap"].forEach((name) => {
+          const value = sheetStyle.getPropertyValue(name);
+          if (value) document.body.style.setProperty(name, value);
         });
+        columns.forEach((column, sourceIndex) => {
+          if (!column || !availableHeight) return;
+          const blocks = [...column.querySelectorAll<HTMLElement>("[data-paper-block]")];
+          blocks.forEach((block) => {
+            const span = Math.max(1, Number(block.dataset.columnSpan) || 1);
+            const measure = block.cloneNode(true) as HTMLElement;
+            measure.style.position = "fixed";
+            measure.style.left = "-10000px";
+            measure.style.top = "0";
+            measure.style.width = `${block.offsetWidth}px`;
+            measure.style.height = "max-content";
+            measure.style.minHeight = "0";
+            measure.style.maxHeight = "none";
+            measure.style.overflow = "visible";
+            document.body.append(measure);
+            const height = measure.getBoundingClientRect().height;
+            measure.remove();
+            for (let covered = sourceIndex; covered < Math.min(6, sourceIndex + span); covered += 1) {
+              heights[covered] = (heights[covered] ?? 0) + height + gap;
+            }
+          });
+        });
+        ["--d-headline", "--d-title", "--d-sub", "--d-body", "--d-lh", "--d-ratio", "--d-kicker", "--d-kicker-display", "--d-rule", "--d-hfont", "--column-gap"].forEach((name) => document.body.style.removeProperty(name));
+        return heights.map((height) => columnFillPercent(height, availableHeight));
       });
       setColumnFills(measurements);
     });

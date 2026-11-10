@@ -17,10 +17,18 @@ const REGION_SECTION: Record<string, string> = {
 export function FeedPanel({
   onPick,
   pages = [],
+  pageIndex,
+  onPageChange,
+  startColumn,
+  onStartColumnChange,
   onAutoPlace,
 }: {
   onPick: (url: string, section: string) => void;
   pages?: { no: number; title: string; section?: string }[];
+  pageIndex: number;
+  onPageChange: (index: number) => void;
+  startColumn: number;
+  onStartColumnChange: (index: number) => void;
   onAutoPlace?: (items: Item[], pageIndex: number, startColumn: number, replace: boolean, section: string) => void;
 }) {
   const load = useServerFn(listFeeds);
@@ -47,8 +55,6 @@ export function FeedPanel({
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
   const [newUrl, setNewUrl] = useState("");
-  const [autoPage, setAutoPage] = useState(0);
-  const [startColumn, setStartColumn] = useState(0);
   const [autoCount, setAutoCount] = useState(6);
   const [replace, setReplace] = useState(true);
 
@@ -64,7 +70,7 @@ export function FeedPanel({
       setBusy(false);
       if (!result.items.length) return setMsg("পূর্ণ প্রতিবেদন পাওয়া যায়নি—কোনো সারাংশ পাতায় বসানো হয়নি।");
       setMsg(result.skipped ? `${result.skipped}টি খবরের পূর্ণ প্রতিবেদন মেলেনি; সেগুলো বাদ দেওয়া হয়েছে।` : "পূর্ণ প্রতিবেদনগুলো পাতায় বসানো হয়েছে।");
-      onAutoPlace(result.items, autoPage, startColumn, replace, pages[autoPage]?.section ?? REGION_SECTION[region] ?? "দেশ");
+      onAutoPlace(result.items, pageIndex, startColumn, replace, pages[pageIndex]?.section ?? REGION_SECTION[region] ?? "দেশ");
       return;
     }
     const active = feeds.filter((f) => f.region === region && f.active && (f as Feed & { kind?: string }).kind !== "site");
@@ -88,7 +94,7 @@ export function FeedPanel({
     setBusy(false);
     if (!result.items.length) return setMsg("পূর্ণ প্রতিবেদন পাওয়া যায়নি—কোনো সারাংশ পাতায় বসানো হয়নি।");
     setMsg(result.skipped ? `${result.skipped}টি খবরের পূর্ণ প্রতিবেদন মেলেনি; সেগুলো বাদ দেওয়া হয়েছে।` : "পূর্ণ প্রতিবেদনগুলো পাতায় বসানো হয়েছে।");
-    onAutoPlace(result.items, autoPage, startColumn, replace, pages[autoPage]?.section ?? REGION_SECTION[region] ?? "দেশ");
+    onAutoPlace(result.items, pageIndex, startColumn, replace, pages[pageIndex]?.section ?? REGION_SECTION[region] ?? "দেশ");
     void refresh();
   };
 
@@ -164,12 +170,7 @@ export function FeedPanel({
       {onAutoPlace && (
         <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-newsprint-rule pt-3 font-serif-bn text-xs">
           <span className="font-bold">স্বয়ংক্রিয় বিন্যাস:</span>
-          <select aria-label="কোন পাতায়" value={autoPage} onChange={(e) => setAutoPage(Number(e.target.value))} className="border border-newsprint-rule bg-background px-2 py-1">
-            {pages.map((p, i) => <option key={i} value={i}>পৃষ্ঠা {p.no} · {p.title}</option>)}
-          </select>
-          <select aria-label="কোন কলাম থেকে" value={startColumn} onChange={(e) => setStartColumn(Number(e.target.value))} className="border border-newsprint-rule bg-background px-2 py-1">
-            {Array.from({ length: 6 }, (_, i) => <option key={i} value={i}>কলাম {i + 1} থেকে</option>)}
-          </select>
+          <span className="text-newsprint-muted">পৃষ্ঠা {pages[pageIndex]?.no ?? pageIndex + 1} · কলাম {startColumn + 1} থেকে</span>
           <select aria-label="উৎস" value={source} onChange={(e) => setSource(e.target.value as "feeds" | "saved")} className="border border-newsprint-rule bg-background px-2 py-1">
             <option value="feeds">“{region}” সক্রিয় ফিড</option>
             <option value="saved">“{region}” সংরক্ষিত খবর</option>

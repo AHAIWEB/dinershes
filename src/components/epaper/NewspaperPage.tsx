@@ -65,6 +65,8 @@ export function NewspaperPage({
             {col.map((block) => (
               <div
                 key={block.id}
+                data-paper-block="true"
+                data-column-span={Math.min(6 - ci, Math.max(1, block.columnSpan ?? 1))}
                 draggable={editable}
                 onDragStart={editable ? () => onDragStartBlock?.(block.id) : undefined}
                 onClick={editable ? () => onSelect?.(block) : undefined}
