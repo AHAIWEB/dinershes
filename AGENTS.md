@@ -15,4 +15,4 @@
 - Publish only by an editor's manual action after approval; automatic scheduling was removed to protect editorial review.
 - Serve the user-supplied logo through an asset pointer and keep its cropped version in the masthead; this preserves source artwork and keeps the repository lightweight.
 - Edition-wide page design lives in `editions.design` and reaches blocks via CSS variables from `designVars`; keeps all four pages uniform without per-block edits.
-- Feed parsing uses regex over raw XML, not linkedom; HTML parsing drops `<link>` text in RSS.
+- Keep RSS/Atom parsing in a raw-XML utility and test feed parsing and article selection independently; Python feed-sync runs outside the app with a signed-in editorial user and RLS, never an admin key.

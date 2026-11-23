@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Save new stories from active feeds into দিনের শেষ খবর.
 
-Set EPAPER_APP_URL, EPAPER_EDITOR_EMAIL and EPAPER_EDITOR_PASSWORD before running.
-For a scheduled task, store the email and password in your operating system's
-secret environment settings; never put them in this file or a shared repository.
-The app checks the account's editorial role and saves stories only; it does not publish editions.
-This script uses only Python's standard library.
+Set EPAPER_CLOUD_URL, EPAPER_PUBLISHABLE_KEY, EPAPER_EDITOR_EMAIL and
+EPAPER_EDITOR_PASSWORD before running, or enter them when prompted. Use your
+operating system's protected secret settings if scheduling this script; never
+put a password or access token in this file. It saves stories only and never
+publishes editions. Requires only Python's standard library.
 """
 
 import getpass

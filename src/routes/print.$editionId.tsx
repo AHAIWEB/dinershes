@@ -42,13 +42,14 @@ function PrintPage() {
       const measurements = edition.pages.map((_, pageIndex) => {
         const sheet = refs.current[pageIndex];
         const grid = sheet?.querySelector<HTMLElement>("[data-newspaper-grid]");
-        if (!grid) return Array.from({ length: 6 }, () => 0);
+        if (!sheet || !grid) return Array.from({ length: 6 }, () => 0);
         const availableHeight = grid.clientHeight;
         const columns = Array.from({ length: 6 }, (_, index) =>
           grid.querySelector<HTMLElement>(`[data-paper-column="${index}"]`),
         );
         const heights = Array.from({ length: 6 }, () => 0);
-        const sheetStyle = getComputedStyle(sheet);
+        const designRoot = sheet.querySelector<HTMLElement>(".newspaper-sheet") ?? sheet;
+        const sheetStyle = getComputedStyle(designRoot);
         const gap = Number.parseFloat(getComputedStyle(grid).rowGap) || 0;
         ["--d-headline", "--d-title", "--d-sub", "--d-body", "--d-lh", "--d-ratio", "--d-kicker", "--d-kicker-display", "--d-rule", "--d-hfont", "--column-gap"].forEach((name) => {
           const value = sheetStyle.getPropertyValue(name);
@@ -58,7 +59,7 @@ function PrintPage() {
           if (!column || !availableHeight) return;
           const blocks = [...column.querySelectorAll<HTMLElement>("[data-paper-block]")];
           blocks.forEach((block) => {
-            const span = Math.max(1, Number(block.dataset.columnSpan) || 1);
+            const span = Math.max(1, Number(block.dataset["columnSpan"]) || 1);
             const measure = block.cloneNode(true) as HTMLElement;
             measure.style.position = "fixed";
             measure.style.left = "-10000px";
